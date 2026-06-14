@@ -29,12 +29,46 @@
             <version>5.8.0</version>
         </dependency>
 
+<!--
+SLF4J API (NOT RECOMMENDED IN CURRENT FRAMEWORK SETUP)
+
+Purpose:
+- Logging abstraction layer only (does NOT perform logging itself)
+- Requires a backend implementation (Logback / Log4j2 / etc.)
+
+Why NOT used here:
+- Framework already uses Log4j2 directly (log4j-api + log4j-core)
+- Adding SLF4J without standardizing backend creates dual logging pathways
+- Increases risk of classpath conflicts and duplicate logs in CI runs
+
+Recommended approach for this framework:
+- Either use Log4j2 directly OR
+- Use SLF4J + Log4j2 binding (not Logback)
+-->
 <dependency>
     <groupId>org.slf4j</groupId>
     <artifactId>slf4j-api</artifactId>
     <version>2.0.12</version>
 </dependency>
 
+
+<!--
+LOGBACK CLASSIC (NOT RECOMMENDED IN THIS FRAMEWORK)
+
+Purpose:
+- Concrete logging implementation for SLF4J
+- Alternative to Log4j2 logging backend
+
+Why NOT used here:
+- Conflicts with existing Log4j2 backend
+- Leads to multiple logging implementations on classpath
+- Can cause unpredictable logging binding at runtime
+- Increases debugging complexity in parallel execution environments
+
+Preferred in this framework:
+- Log4j2 is the single logging backend (log4j-api + log4j-core)
+- Avoid mixing logging frameworks in same runtime
+-->
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
@@ -42,6 +76,55 @@
 </dependency>
 
 
+<!--
+	
+	If later you migrate to best practice (optional future upgrade)
+	
+	
+SLF4J + Log4j2 Bridge (RECOMMENDED ENTERPRISE SETUP)
+
+Purpose:
+- Standard logging abstraction (SLF4J API)
+- Delegates actual logging to Log4j2 backend
+- Provides flexibility to swap logging implementations in future
+
+Benefits:
+- Clean architecture separation (API vs implementation)
+- No tight coupling to Log4j2 in business code
+- Industry-standard enterprise logging approach
+-->
+
+ <!-- ExtentReports (Reporting engine) -->
+
+<dependency>
+    <groupId>com.aventstack</groupId>
+    <artifactId>extentreports</artifactId>
+    <version>5.1.2</version>
+</dependency>
+
+
+ <!-- Log4j2 (Logging framework) -->
+
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-api</artifactId>
+    <version>2.23.1</version>
+</dependency>
+
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-core</artifactId>
+    <version>2.23.1</version>
+</dependency>
+
+
+ <!-- Commons IO (useful for screenshot file handling) -->
+
+<dependency>
+    <groupId>commons-io</groupId>
+    <artifactId>commons-io</artifactId>
+    <version>2.16.1</version>
+</dependency>
 
   </dependencies>
 
