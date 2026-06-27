@@ -3,7 +3,7 @@ package com.framework.orchestrator.context;
 import org.openqa.selenium.WebDriver;
 
 import com.framework.core.config.ConfigLoader;
-import com.framework.core.config.ExecutionContext;
+import com.framework.core.context.ExecutionContext;
 import com.framework.core.context.ExecutionContextHolder;
 import com.framework.core.driver.BrowserType;
 import com.framework.core.driver.DriverFactory;

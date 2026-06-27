@@ -17,7 +17,6 @@ import com.framework.core.logging.TestLogger;
  * =============================================================================
  * Class Name : WaitUtils
  * =============================================================================
- *
  * Responsibility:
  * Centralized explicit wait utility for framework.
  *
@@ -34,10 +33,10 @@ import com.framework.core.logging.TestLogger;
  *
  * waitUtils.waitForVisible(loginButton);
  * waitUtils.waitForClickable(submitButton);
- *
  * =============================================================================
  */
-public class WaitUtils {
+
+public class WaitManager {
 
     /**
      * Default explicit wait timeout.
@@ -53,9 +52,17 @@ public class WaitUtils {
      *
      * @param driver Active WebDriver instance
      */
-    public WaitUtils(WebDriver driver) {
+    public WaitManager(WebDriver driver) {
         this.driver = driver;
     }
+    
+    
+    private WebDriverWait createWait() {
+        return new WebDriverWait(
+                driver,
+                Duration.ofSeconds(WaitConstants.EXPLICIT_WAIT_SECONDS));
+    }
+    
 
     /**
      * Wait until element becomes visible.
@@ -70,11 +77,10 @@ public class WaitUtils {
      */
     public WebElement waitForVisible(By locator) {
 
-        WebDriverWait wait =
-                new WebDriverWait(driver,
-                        Duration.ofSeconds(WaitConstants.EXPLICIT_WAIT_SECONDS));
+        TestLogger.logWait(
+                "Waiting for visibility: " + locator);
 
-        return wait.until(
+        return createWait().until(
                 ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
@@ -90,11 +96,10 @@ public class WaitUtils {
      */
     public WebElement waitForClickable(By locator) {
 
-        WebDriverWait wait =
-                new WebDriverWait(driver,
-                        Duration.ofSeconds(WaitConstants.EXPLICIT_WAIT_SECONDS));
+        TestLogger.logWait(
+                "Waiting for clickable: " + locator);
 
-        return wait.until(
+        return createWait().until(
                 ExpectedConditions.elementToBeClickable(locator));
     }
 
@@ -112,11 +117,10 @@ public class WaitUtils {
      */
     public WebElement waitForPresence(By locator) {
 
-        WebDriverWait wait =
-                new WebDriverWait(driver,
-                        Duration.ofSeconds(WaitConstants.EXPLICIT_WAIT_SECONDS));
+        TestLogger.logWait(
+                "Waiting for presence: " + locator);
 
-        return wait.until(
+        return createWait().until(
                 ExpectedConditions.presenceOfElementLocated(locator));
     }
 
@@ -133,11 +137,10 @@ public class WaitUtils {
      */
     public boolean waitForInvisible(By locator) {
 
-        WebDriverWait wait =
-                new WebDriverWait(driver,
-                        Duration.ofSeconds(WaitConstants.EXPLICIT_WAIT_SECONDS));
+        TestLogger.logWait(
+                "Waiting for invisible: " + locator);
 
-        return wait.until(
+        return createWait().until(
                 ExpectedConditions.invisibilityOfElementLocated(locator));
     }
 
@@ -156,11 +159,10 @@ public class WaitUtils {
 
 		TestLogger.logStep("web-> waits -> WaitsUtils ->waitForPageLoad === EXPLICIT_WAIT_SECONDS ="+WaitConstants.EXPLICIT_WAIT_SECONDS);
 
-        WebDriverWait wait =
-                new WebDriverWait(driver,
-                        Duration.ofSeconds(WaitConstants.EXPLICIT_WAIT_SECONDS));
+        TestLogger.logWait(
+                "Waiting for pageloaded");
 
-        wait.until(driver -> ((JavascriptExecutor) driver)
+        createWait().until(driver -> ((JavascriptExecutor) driver)
                 .executeScript("return document.readyState")
                 .equals("complete"));
     }
@@ -180,12 +182,24 @@ public class WaitUtils {
      */
     public WebElement waitForVisible(By locator,
                                      int timeoutInSeconds) {
+        TestLogger.logWait(
+                "Waiting for visible: " + locator);
 
-        WebDriverWait wait =
-                new WebDriverWait(driver,
-                        Duration.ofSeconds(timeoutInSeconds));
-
-        return wait.until(
+        return createWait().until(
                 ExpectedConditions.visibilityOfElementLocated(locator));
-    }   
+    } 
+    
+    // ------------------------------------------------------------------------
+    // FUTURE EXTENSION NOTE
+    // ------------------------------------------------------------------------
+    /*
+     * Future improvements:
+     * --------------------
+     * - FluentWait support (polling, ignore exceptions)
+     * - Custom retry mechanism
+     * - Smart wait (JS + network idle detection)
+     * - Config-based timeout per page/module
+     * - Element state caching for performance
+     */
+    
 }

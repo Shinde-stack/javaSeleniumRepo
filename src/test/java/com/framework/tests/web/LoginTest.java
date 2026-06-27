@@ -3,9 +3,9 @@ package com.framework.tests.web;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.framework.core.assertion.AssertionEngine;
+import com.framework.core.assertion.Severity;
 import com.framework.core.logging.TestLogger;
-import com.framework.core.validation.AssertionEngine;
-import com.framework.core.validation.Severity;
 import com.framework.orchestrator.base.BaseTest;
 import com.framework.web.pages.LoginPage;
 import com.framework.web.actions.WebActions;
@@ -36,22 +36,27 @@ public class LoginTest extends BaseTest {
     public void verifyValidLogin() {
  		TestLogger.logStep("=====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>LoginTest - verifyValidLogin === start");
 
+ 		
+ 
+ 	    
+ 	    
+ 	    
         // Page initialization (driver comes from ExecutionContext internally)
         LoginPage loginPage = new LoginPage();
 
-        // Optional: navigation layer (recommended separation)
-        WebActions webActions = new WebActions(
-//                com.framework.core.context.ExecutionContextHolder
-//                        .getContext()
-//                        .driver()
-//                        .getDriver()
-        		
-        		driver
-        );
-
-        // Step 1: open application
-        webActions.openUrl("https://practicetestautomation.com/practice-test-login/");
-		
+//        // Optional: navigation layer (recommended separation)
+//        WebActions webActions = new WebActions(
+////                com.framework.core.context.ExecutionContextHolder
+////                        .getContext()
+////                        .driver()
+////                        .getDriver()
+//        		
+//        		driver
+//        );
+//
+//        // Step 1: open application
+//        webActions.openUrl("https://practicetestautomation.com/practice-test-login/");
+//		
         TestLogger.logStep(
 		        "TestLogger in TEST -checking ---- google ");
 		

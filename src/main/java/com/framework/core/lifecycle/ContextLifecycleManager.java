@@ -1,49 +1,69 @@
 package com.framework.core.lifecycle;
 
-import com.framework.core.config.ExecutionContext;
-import com.framework.core.context.ContextState;
+import org.openqa.selenium.WebDriver;
 
-/**
- * Controls context lifecycle transitions.
- *
- * Single place responsible for
- * changing context states.
- */
+import com.aventstack.extentreports.ExtentTest;
+import com.framework.core.config.ConfigLoader;
+import com.framework.core.config.EnvConfig;
+import com.framework.core.context.ContextState;
+import com.framework.core.context.ExecutionContext;
+import com.framework.core.context.ExecutionContextHolder;
+import com.framework.core.driver.DriverManager;
+import com.framework.core.logging.TestLogger;
+import com.framework.core.reporting.ReportManager;
+
 public class ContextLifecycleManager {
 
-    /**
-     * Context initialized.
-     */
-    public void initialize(ExecutionContext context) {
+    private final DriverManager driverManager = new DriverManager();
 
-        context.setState(ContextState.INITIALIZED);
-    }
+    public void startTest() {
 
-    /**
-     * Test execution started.
-     */
-    public void startExecution(ExecutionContext context) {
+        // 1. LOAD CONFIG
+        EnvConfig config = new ConfigLoader().load();
 
+        // 2. CREATE CONTEXT
+        ExecutionContext context = new ExecutionContext();
+        ExecutionContextHolder.setContext(context);
+
+        // 3. DRIVER INIT
+        driverManager.initializeDriver(context,
+                config.getBrowserType(),
+                config.isHeadless());
+
+        WebDriver driver = context.getDriverContext().getDriver();
+
+        // 4. OPEN APP
+        driver.get(config.getBaseUrl());
+
+        // 5. REPORT INIT (CRITICAL ORDER FIX)
+        ExtentTest test =
+                ReportManager.createTest(Thread.currentThread().getName());
+
+        ReportManager.setTest(test);
+
+        // 6. STATE UPDATE
         context.setState(ContextState.RUNNING);
+
+        TestLogger.logStep("Lifecycle initialized");
     }
 
-    /**
-     * Cleanup started.
-     */
-    public void startCleanup(ExecutionContext context) {
+    public void endTest() {
 
-        context.setState(ContextState.CLEANING_UP);
-    }
+        ExecutionContext context =
+                ExecutionContextHolder.getContext();
 
-    /**
-     * Context destroyed.
-     */
-    public void destroy(ExecutionContext context) {
+        try {
+            // 1. DRIVER CLEANUP
+            driverManager.quitDriver(context);
 
-        context.driver().quitDriver();
+            // 2. STATE UPDATE
+            context.setState(ContextState.DESTROYED);
 
-        context.db().closeConnection();
+        } finally {
 
-        context.setState(ContextState.DESTROYED);
+            // 3. REMOVE THREAD DATA
+            ReportManager.removeTest();
+            ExecutionContextHolder.clear();
+        }
     }
 }

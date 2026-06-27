@@ -1,6 +1,6 @@
 package com.framework.core.reporting;
 
-import com.framework.core.config.ExecutionContext;
+import com.framework.core.context.ExecutionContext;
 import com.framework.core.context.ExecutionContextHolder;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -49,7 +49,7 @@ public final class ScreenshotService {
                     ExecutionContextHolder.getContext();
 
             WebDriver driver =
-                    context.driver().getDriver();
+                    context.getDriverContext().getDriver();
 
             if (driver == null) {
                 return null;

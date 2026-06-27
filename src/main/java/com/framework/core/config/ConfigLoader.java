@@ -275,13 +275,13 @@ public class ConfigLoader {
 	            Boolean.parseBoolean(
 	                    properties.getProperty(
 	                            "log.element.actions",
-	                            "false"));
+	                            "true"));
 
 	    boolean logWaitActions =
 	            Boolean.parseBoolean(
 	                    properties.getProperty(
 	                            "log.wait.actions",
-	                            "false"));
+	                            "true"));
 
 	    // ---------------------------------------------------------
 	    // STEP 3.3

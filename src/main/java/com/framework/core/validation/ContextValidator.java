@@ -1,126 +1,172 @@
 package com.framework.core.validation;
 
-import com.framework.core.config.ExecutionContext;
 import com.framework.core.context.ContextState;
+import com.framework.core.context.ExecutionContext;
 
 /**
  * ============================================================================
  * Class Name : ContextValidator
  * ============================================================================
  *
- * Responsibility:
- * ---------------------------------------------------------------------------
- * Validate ExecutionContext integrity before framework components use it.
+ * Purpose:
+ * --------
+ * Pre-flight validation guard for ExecutionContext.
  *
- * Why this exists:
- * ---------------------------------------------------------------------------
- * Prevents NullPointerExceptions later in execution by failing fast during
- * framework initialization.
+ * Responsibilities:
+ * -----------------
+ * 1. Validate ExecutionContext exists
+ * 2. Validate mandatory sub-contexts exist
+ * 3. Validate lifecycle state
+ * 4. Detect duplicate driver initialization
+ * 5. Fail fast before test execution starts
+ *
+ * Why this class exists:
+ * ----------------------
+ * Prevent framework execution from reaching runtime
+ * NullPointerExceptions caused by invalid setup.
  *
  * Example:
  *
- * BAD: ---- DriverContext is null ↓ Test executes ↓ Random NullPointerException
- * after 5 minutes
+ * BAD
+ * ----
+ * DriverContext missing
+ *      ↓
+ * Test starts
+ *      ↓
+ * Page Object executes
+ *      ↓
+ * NullPointerException
  *
- * GOOD: ---- ContextValidator detects issue immediately ↓ Test fails during
- * setup ↓ Faster debugging
- *
- * Validation Scope:
- * --------------------------------------------------------------------------- -
- * ExecutionContext exists - DriverContext exists - ApiContext exists -
- * DbContext exists - MetadataContext exists
- *
- * Future:
- * ---------------------------------------------------------------------------
- * Additional validations can be added:
- *
- * - Driver initialized - Environment configured - Correlation ID generated -
- * Required metadata present
+ * GOOD
+ * ----
+ * ContextValidator
+ *      ↓
+ * Immediate failure during setup
+ *      ↓
+ * Faster debugging
  *
  * ============================================================================
  */
 public final class ContextValidator {
 
-	private ContextValidator() {
-	}
+    private ContextValidator() {
+    }
 
-	/**
-	 * Validates execution context.
-	 *
-	 * Fail-fast approach: Framework stops immediately if required context
-	 * components are missing.
-	 *
-	 * @param context ExecutionContext to validate
-	 */
-	public static void validate(ExecutionContext context) {
+    /**
+     * Validates ExecutionContext before driver creation.
+     *
+     * Expected State:
+     *
+     * CREATED
+     *      ↓
+     * validate()
+     *      ↓
+     * Driver Initialization
+     *      ↓
+     * INITIALIZED
+     *      ↓
+     * RUNNING
+     * 
+     * ===========================
+     * 
+ExecutionContext created
+      ↓
+State = CREATED
+      ↓
+ContextValidator.validate()
+      ↓
+Driver initialization
+      ↓
+State = INITIALIZED
+      ↓
+Open URL
+      ↓
+State = RUNNING
 
-		// ---------------------------------------------------------
-		// STEP 1: CONTEXT EXISTS
-		// ---------------------------------------------------------
-		if (context == null) {
-			throw new IllegalStateException("ExecutionContext is not initialized for thread:"
-					+ Thread.currentThread().getName() + "ExecutionContext is NULL. " +
-                    "BaseTest or Listener did not initialize context.");
-		}
+=================================
+     */
+    public static void validate(ExecutionContext context) {
 
-	    // ---------------------------------------------------------
-        // STEP 2: VALID STATE CHECK
-        // ---------------------------------------------------------
-        if (context.getState() == null) {
+        // ==========================================================
+        // STEP 1 : Context existence
+        // ==========================================================
+        if (context == null) {
+
             throw new IllegalStateException(
-                    "ExecutionContext state is NULL. Invalid initialization.");
+                    "ExecutionContext is NULL. " +
+                    "Framework setup failed before context creation.");
         }
-        
-        if (!context.getState().equals(ContextState.INITIALIZED)) {
+
+        // ==========================================================
+        // STEP 2 : Lifecycle state existence
+        // ==========================================================
+        if (context.getState() == null) {
+
             throw new IllegalStateException(
-                    "ExecutionContext is not in INITIALIZED state. Current state: "
+                    "ExecutionContext state is NULL.");
+        }
+
+        // ==========================================================
+        // STEP 3 : Expected lifecycle state
+        // ==========================================================
+        if (context.getState() != ContextState.CREATED) {
+
+            throw new IllegalStateException(
+                    "Expected context state CREATED but found: "
                             + context.getState());
         }
 
-        // ---------------------------------------------------------
-        // STEP 3: DRIVER SAFETY CHECK (avoid double init)
-        // ---------------------------------------------------------
-        if (context.getDriverContext() != null
-                && context.getDriverContext().getDriver() != null) {
+        // ==========================================================
+        // STEP 4 : DriverContext existence
+        // ==========================================================
+        if (context.getDriverContext() == null) {
 
             throw new IllegalStateException(
-                    "Driver already initialized in context. Possible duplicate setup.");
+                    "DriverContext is not initialized.");
         }
-        
-        
-		// ---------------------------------------------------------
-		// Validate DriverContext
-		// ---------------------------------------------------------
-		if (context.getDriverContext() == null) {
 
-			throw new IllegalStateException("DriverContext is not initialized.");
-		}
+        // ==========================================================
+        // STEP 5 : Config existence
+        // ==========================================================
+        if (context.getConfig() == null) {
 
-	
-        
-        
-		// ---------------------------------------------------------
-		// Validate ApiContext
-		// ---------------------------------------------------------
-		if (context.getApiContext() == null) {
+            throw new IllegalStateException(
+                    "EnvConfig is not attached to ExecutionContext.");
+        }
 
-			throw new IllegalStateException("ApiContext is not initialized.");
-		}
+        // ==========================================================
+        // STEP 6 : Prevent duplicate driver initialization
+        // ==========================================================
+        if (context.hasDriver()) {
 
-		// ---------------------------------------------------------
-		// Validate DbContext
-		// ---------------------------------------------------------
-		if (context.getDbContext() == null) {
-
-			throw new IllegalStateException("DbContext is not initialized.");
-		}
-
-		// ---------------------------------------------------------
-		// Validate MetadataContext
-		// ---------------------------------------------------------
-		if (context.getMetadataContext() == null) {
-
-			throw new IllegalStateException("TestMetadataContext is not initialized.");
-		}
-	}
+            throw new IllegalStateException(
+                    "Driver already exists in context. " +
+                    "Possible duplicate setup execution.");
+        }
+    }
+    
+//    BaseTest integration
+//    context = new ExecutionContext();
+//
+//    context.setConfig(config);
+//
+//    ExecutionContextHolder.setContext(context);
+//
+//    ContextValidator.validate(context);
+//
+//    driverManager.initializeDriver(...);
+//
+//    context.setState(ContextState.INITIALIZED);
+//
+//    driver = context.getDriverContext().getDriver();
+//
+//    context.setState(ContextState.RUNNING);  
+    
+    
+    
+    
+    
+    
+    
+    
 }

@@ -147,7 +147,7 @@ public final class ReportManager {
 	public static void setTest(ExtentTest test) {
 
 		if (test == null) {
-			throw new IllegalArgumentException("ExtentTest cannot be null.");
+			throw new IllegalArgumentException("ExtentTest cannot be null. 'createTest' need to be called before seatTest method");
 		}
 
 		extentTest_thread.set(test);

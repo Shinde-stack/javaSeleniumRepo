@@ -1,323 +1,218 @@
-//package com.framework.core.logging;
-//
-//import com.framework.core.reporting.ReportManager;
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
-//
-///**
-// * ============================================================================
-// * Class Name : TestLogger
-// * ============================================================================
-// *
-// * Purpose:
-// * --------
-// * Unified logging facade:
-// * - Console logs (Log4j)
-// * - ExtentReports (via ReportManager)
-// *
-// * IMPORTANT:
-// * ----------
-// * This class MUST NOT manage ExtentTest lifecycle.
-// * It only consumes reporting layer.
-// */
-//public class TestLogger {
-//
-//    private static final Logger log =
-//            LogManager.getLogger(TestLogger.class);
-//
-//    // ---------------------------------------------------------------------
-//    // BUSINESS STEP LOGGING
-//    // ---------------------------------------------------------------------
-//
-//    public static void logStep(String message) {
-//
-//        log.info(message);
-//        ReportManager.info(message);
-//    }
-//
-//    // ---------------------------------------------------------------------
-//    // UI / ACTION LOGGING
-//    // ---------------------------------------------------------------------
-//
-//    public static void logAction(String message) {
-//
-//        log.debug(message);
-//        ReportManager.info("[ACTION] " + message);
-//    }
-//
-//    // ---------------------------------------------------------------------
-//    // GENERAL INFO LOGGING
-//    // ---------------------------------------------------------------------
-//
-//    public static void logInfo(String message) {
-//
-//        log.info(message);
-//        ReportManager.info(message);
-//    }
-//
-//    // ---------------------------------------------------------------------
-//    // FAILURE LOGGING
-//    // ---------------------------------------------------------------------
-//
-//    public static void logFailure(String message, Throwable t) {
-//
-//        log.error(message, t);
-//
-//        ReportManager.fail(message);
-//        ReportManager.fail(t);
-//    }
-//}
-
 package com.framework.core.logging;
 
-import com.framework.core.config.EnvConfig;
-import com.framework.core.config.ExecutionContext;
-import com.framework.core.context.ExecutionContextHolder;
-import com.framework.core.reporting.ReportManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.framework.core.config.EnvConfig;
+import com.framework.core.context.ExecutionContext;
+import com.framework.core.context.ExecutionContextHolder;
+import com.framework.core.reporting.ReportManager;
 
 /**
  * ============================================================================
  * Class Name : TestLogger
  * ============================================================================
  *
- * PURPOSE: -------- Centralized logging facade for framework.
+ * Purpose:
+ * --------
+ * Centralized logging facade for framework.
  *
- * Supports: - Console logging (Log4j) - Report logging (Extent)
+ * All framework components should log only through this class.
  *
- * WHY THIS CLASS EXISTS: ---------------------- Framework code should never
- * directly call:
+ * Responsibilities:
+ * -----------------
+ * - Console logging (Log4j)
+ * - Report logging (Extent)
+ * - Config-based logging control
  *
- * log.info(...) ReportManager.info(...)
+ * Non Responsibilities:
+ * ---------------------
+ * - Report lifecycle management
+ * - ExtentTest creation
+ * - Assertion execution
  *
- * Instead:
+ * Architecture:
+ * -------------
  *
- * TestLogger.logStep(...) TestLogger.logAction(...) TestLogger.logFailure(...)
- *
- * This gives: - Centralized control - Configurable logging - Cleaner framework
- * code - Easier future enhancements
- *
- * ============================================================================
- *
- * ARCHITECTURE
- * ============================================================================
- *
- * Framework Component ↓ TestLogger ↓ ---------------- | | Log4j ReportManager
- *
- * ============================================================================
- *
- * CONFIGURATION SOURCE
- * ============================================================================
- *
- * qa.properties ↓ ConfigLoader ↓ EnvConfig ↓ ExecutionContext ↓ TestLogger
+ * Framework Component
+ *         ↓
+ *     TestLogger
+ *      ↙     ↘
+ *  Log4j    ReportManager
  *
  * ============================================================================
  */
 public final class TestLogger {
 
-	/**
-	 * Log4j logger.
-	 */
-	private static final Logger LOG = LogManager.getLogger(TestLogger.class);
+    private static final Logger LOG =
+            LogManager.getLogger(TestLogger.class);
 
-	/**
-	 * Utility class.
-	 */
-	private TestLogger() {
-	}
+    private TestLogger() {
+    }
 
-	// =========================================================================
-	// BUSINESS STEPS
-	// =========================================================================
+    /**
+     * Business level execution step.
+     *
+     * Example:
+     * Login successful
+     * Order created
+     */
+    public static void logStep(String message) {
 
-	/**
-	 * High-level business step.
-	 *
-	 * Example:
-	 *
-	 * Login successful Order submitted Customer created
-	 *
-	 * Always important.
-	 */
-	public static void logStep(String message) {
+        EnvConfig config = getConfig();
 
-		EnvConfig config = getConfig();
+        if (config == null) {
+            LOG.info(message);
+            return;
+        }
 
-		if (config == null) {
-			LOG.info(message);
-			return;
-		}
+        if (config.isLogToConsole()) {
+            LOG.info(message);
+        }
 
-		if (config.isLogToConsole()) {
-			LOG.info(message);
-		}
+        if (config.isLogToReport()) {
+            ReportManager.info(message);
+        }
+    }
 
-		if (config.isLogToReport()) {
-			ReportManager.info(message);
-		}
-	}
+    /**
+     * Element interaction logging.
+     *
+     * Example:
+     * Clicked Login button
+     * Entered Username
+     */
+    public static void logAction(String message) {
 
-	// =========================================================================
-	// ELEMENT ACTIONS
-	// =========================================================================
+        EnvConfig config = getConfig();
 
-	/**
-	 * Low-level action logging.
-	 *
-	 * Examples:
-	 *
-	 * Clicked Login button Entered username Selected country dropdown
-	 *
-	 * Usually disabled in large suites.
-	 */
-	public static void logAction(String message) {
+        // Framework startup phase
+        if (config == null) {
+            LOG.debug(message);
+            return;
+        }
 
-		EnvConfig config = getConfig();
+        // Feature disabled
+        if (!config.isLogElementActions()) {
+            return;
+        }
 
-		if (config == null) {
-			return;
-		}
+        if (config.isLogToConsole()) {
+            LOG.debug(message);
+        }
 
-		if (!config.isLogElementActions()) {
-			return;
-		}
+        if (config.isLogToReport()) {
+            ReportManager.info("[ACTION] " + message);
+        }
+    }
 
-		if (config.isLogToConsole()) {
-			LOG.debug(message);
-		}
+    /**
+     * Wait operation logging.
+     *
+     * Example:
+     * Waiting for visibility
+     * Waiting for clickability
+     */
+    public static void logWait(String message) {
 
-		if (config.isLogToReport()) {
-			ReportManager.info("[ACTION] " + message);
-		}
-	}
+        EnvConfig config = getConfig();
 
-	// =========================================================================
-	// WAIT ACTIONS
-	// =========================================================================
+        // Framework startup phase
+        if (config == null) {
+            LOG.debug(message);
+            return;
+        }
 
-	/**
-	 * Wait-related logging.
-	 *
-	 * Examples:
-	 *
-	 * Waiting for visibility Waiting for clickability Waiting for page load
-	 */
-	public static void logWait(String message) {
+        // Feature disabled
+        if (!config.isLogWaitActions()) {
+            return;
+        }
 
-		EnvConfig config = getConfig();
+        if (config.isLogToConsole()) {
+            LOG.debug(message);
+        }
 
-		if (config == null) {
-			return;
-		}
+        if (config.isLogToReport()) {
+            ReportManager.info("[WAIT] " + message);
+        }
+    }
 
-		if (!config.isLogWaitActions()) {
-			return;
-		}
+    /**
+     * Generic informational log.
+     */
+    public static void logInfo(String message) {
 
-		if (config.isLogToConsole()) {
-			LOG.debug(message);
-		}
+        EnvConfig config = getConfig();
 
-		if (config.isLogToReport()) {
-			ReportManager.info("[WAIT] " + message);
-		}
-	}
+        if (config == null) {
+            LOG.info(message);
+            return;
+        }
 
-	// =========================================================================
-	// INFORMATIONAL LOGGING
-	// =========================================================================
+        if (config.isLogToConsole()) {
+            LOG.info(message);
+        }
 
-	/**
-	 * Generic informational log.
-	 */
-	public static void logInfo(String message) {
+        if (config.isLogToReport()) {
+            ReportManager.info(message);
+        }
+    }
 
-		EnvConfig config = getConfig();
+    /**
+     * Assertion or execution success.
+     *
+     * Generates PASS status in report.
+     */
+    public static void logPass(String message) {
 
-		if (config == null) {
-			LOG.info(message);
-			return;
-		}
+        LOG.info(message);
 
-		if (config.isLogToConsole()) {
-			LOG.info(message);
-		}
+        try {
+            ReportManager.pass(message);
+        } catch (Exception ignored) {
+        }
+    }
 
-		if (config.isLogToReport()) {
-			ReportManager.info(message);
-		}
-	}
+    /**
+     * Assertion or execution failure.
+     *
+     * Generates FAIL status in report.
+     */
+    public static void logFailure(
+            String message,
+            Throwable throwable) {
 
-	// =========================================================================
-	// FAILURE LOGGING
-	// =========================================================================
+        LOG.error(message, throwable);
 
-	/**
-	 * Failure logging.
-	 *
-	 * Failures should ALWAYS be logged.
-	 *
-	 * Never controlled by configuration.
-	 *
-	 * Why? ---- A failed test without logs is useless.
-	 */
-	public static void logFailure(String message, Throwable throwable) {
+        try {
 
-		LOG.error(message, throwable);
+            ReportManager.fail(message);
 
-		try {
+            if (throwable != null) {
+                ReportManager.fail(throwable);
+            }
 
-			ReportManager.fail(message);
+        } catch (Exception ignored) {
+        }
+    }
 
-			if (throwable != null) {
-				ReportManager.fail(throwable);
-			}
+    /**
+     * Reads current runtime configuration.
+     */
+    private static EnvConfig getConfig() {
 
-		} catch (Exception ignored) {
-			// Report may not be initialized yet
-		}
-	}
+        try {
 
-	// =========================================================================
-	// CONFIG ACCESS
-	// =========================================================================
+            ExecutionContext context =
+                    ExecutionContextHolder.getContext();
 
-	/**
-	 * Reads current runtime configuration from ExecutionContext.
-	 *
-	 * Returns null during startup phases before context initialization.
-	 */
-	private static EnvConfig getConfig() {
+            return context != null
+                    ? context.getConfig()
+                    : null;
 
-		try {
+        } catch (Exception e) {
 
-			ExecutionContext context = ExecutionContextHolder.getContext();
-
-			if (context == null) {
-				return null;
-			}
-
-			return context.getConfig();
-
-		} catch (Exception e) {
-
-			return null;
-		}
-	}
-
-//	This is sufficient for
-//	your current
-//	framework.I would
-//	not add
-//	log levels, adapters, appenders, event buses,
-//	or logging
-//	strategies yet.
-//	Those are
-//	useful in
-//	enterprise frameworks
-//	but unnecessary complexity for
-//	your practice framework.
-	
-	
+            return null;
+        }
+    }
 }

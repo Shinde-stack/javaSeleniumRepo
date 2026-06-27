@@ -1,4 +1,4 @@
-package com.framework.core.metadata;
+package com.framework.core.context;
 
 import java.util.UUID;
 

@@ -1,217 +1,184 @@
 package com.framework.web.actions;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
-import com.framework.core.context.ExecutionContextHolder;
 import com.framework.core.logging.TestLogger;
+import com.framework.web.exceptions.ElementActionException;
+import com.framework.web.waits.WaitManager;
 
 /**
  * ============================================================================
- * ElementActions (FINAL ORCHESTRATION LAYER)
+ * Class Name : ElementActions
  * ============================================================================
  *
- * Responsibility:
- * - Coordinates waits + actions + fallback
- * - Handles stale element recovery centrally
- * - Provides stable API to Page Objects
+ * ROLE:
+ * -----
+ * Central wrapper for ALL Selenium interactions.
  *
- * IMPORTANT RULES:
- * - Pages must ONLY use this class
- * - Pages must NEVER use WebActions/JsActions directly
- * ============================================================================
+ * RESPONSIBILITIES:
+ * ------------------
+ * - Click actions
+ * - Send keys
+ * - Get text
+ * - Clear field
+ * - Scroll (optional)
+ * - Logging + reporting integration
+ * - Exception wrapping
+ *
+ * RULE:
+ * -----
+ * NEVER use WebDriver directly in Page classes.
+ * All interactions MUST go through this class.
  */
 public class ElementActions {
 
-    private final WebActions webActions;
-    private final JsActions jsActions;
-    private final WaitActions waitActions;
+    private final WebDriver driver;
+    private final WaitManager waitManager;
 
-    public ElementActions(WebDriver driver) {
-        this.webActions = new WebActions(driver);
-        this.jsActions = new JsActions(driver);
-        this.waitActions = new WaitActions(driver);
+    public ElementActions(WebDriver driver, WaitManager waitManager) {
+        this.driver = driver;
+        this.waitManager = waitManager;
     }
 
-//    // ---------------------------------------------------------------------
-//    // PRIMARY ACTIONS (stale-safe)
-//    // ---------------------------------------------------------------------
-//
-//    /**
-//     * Click with automatic stale protection.
-//     */
-//    public void click(By by) {
-//        waitActions.waitForRefreshedClickable(by);
-//        webActions.click(by);
-//    }
-//
-//    /**
-//     * Type with visibility sync.
-//     */
-//    public void type(By by, String text) {
-//        waitActions.waitForVisible(by);
-//        webActions.clear(by);
-//        webActions.type(by, text);
-//    }
-//
-//    /**
-//     * Safe text extraction.
-//     */
-//    public String getText(By by) {
-//        waitActions.waitForVisible(by);
-//        return webActions.getText(by);
-//    }
-//
-//    // ---------------------------------------------------------------------
-//    // FALLBACK ACTIONS
-//    // ---------------------------------------------------------------------
-//
-//    /**
-//     * JS click used only when normal click fails.
-//     */
-//    public void jsClick(By by) {
-//        waitActions.waitForRefreshedClickable(by);
-//        jsActions.click(by);
-//    }
-//
-//    public void scrollTo(By by) {
-//        jsActions.scrollTo(by);
-//    }
-    
-    
-//    //2------------
-//    
-//    // ---------------------------------------------------------------------
-//    // CLICK (stale-safe)
-//    // ---------------------------------------------------------------------
-//
-//    public void click(By by) {
-//
-//        RetryExecutor.execute(() -> {
-//
-//            waitActions.waitForRefreshedClickable(by);
-//
-//            WebElement element = driver.findElement(by);
-//
-//            element.click();
-//
-//            return null;
-//        });
-//    }
-//
-//    // ---------------------------------------------------------------------
-//    // TYPE (stale-safe)
-//    // ---------------------------------------------------------------------
-//
-//    public void type(By by, String text) {
-//
-//        RetryExecutor.execute(() -> {
-//
-//            waitActions.waitForVisible(by);
-//
-//            WebElement element = driver.findElement(by);
-//
-//            element.clear();
-//            element.sendKeys(text);
-//
-//            return null;
-//        });
-//    }
-//
-//    // ---------------------------------------------------------------------
-//    // TEXT
-//    // ---------------------------------------------------------------------
-//
-//    public String getText(By by) {
-//
-//        final String[] result = new String[1];
-//
-//        RetryExecutor.execute(() -> {
-//
-//            waitActions.waitForVisible(by);
-//
-//            WebElement element = driver.findElement(by);
-//
-//            result[0] = element.getText();
-//
-//            return null;
-//        });
-//
-//        return result[0];
-//    }
-//
-//    // ---------------------------------------------------------------------
-//    // JS CLICK (fallback path)
-//    // ---------------------------------------------------------------------
-//
-//    public void jsClick(By by) {
-//
-//        RetryExecutor.execute(() -> {
-//
-//            WebElement element = driver.findElement(by);
-//
-//            jsActions.click(by);
-//
-//            return null;
-//        });
-//    }
-    
-    
-    
-    
-    public void click(By by) {
+    // =========================================================================
+    // CLICK ACTION
+    // =========================================================================
 
-        RetryExecutor.execute(() -> {
+    public void click(By locator, String elementName) {
 
-            waitActions.waitForRefreshedClickable(by);
+        try {
+            TestLogger.logAction("Clicking on: " + elementName);
 
-            WebDriver driver = ExecutionContextHolder
-                    .getContext()
-                    .driver()
-                    .getDriver();
-
-            WebElement element = driver.findElement(by);
-
-            TestLogger.logAction( "element actions - Click element: "+element.getText());
+            WebElement element = waitManager.waitForClickable(locator);
 
             element.click();
 
-            return null;
-        });
+            TestLogger.logStep("Clicked successfully: " + elementName);
+
+        } catch (Exception e) {
+
+            TestLogger.logFailure("Click failed: " + elementName, e);
+
+            throw new ElementActionException(
+                    "Failed to click element: " + elementName, e);
+        }
     }
 
-    public void type(By by, String text) {
+    // =========================================================================
+    // SEND KEYS
+    // =========================================================================
 
-        RetryExecutor.execute(() -> {
+    public void sendKeys(By locator, String value, String elementName) {
 
-            waitActions.waitForVisible(by);
+        try {
+            TestLogger.logAction("Entering value in: " + elementName);
 
-            WebDriver driver = ExecutionContextHolder
-                    .getContext()
-                    .driver()
-                    .getDriver();
-
-            WebElement element = driver.findElement(by);
+            WebElement element = waitManager.waitForVisible(locator);
 
             element.clear();
-            
-            TestLogger.logAction( "element actions - Send keys: "+text);
+            element.sendKeys(value);
 
-            element.sendKeys(text);
+            TestLogger.logStep("Value entered in: " + elementName);
 
-            return null;
-        });
+        } catch (Exception e) {
+
+            TestLogger.logFailure("SendKeys failed: " + elementName, e);
+
+            throw new ElementActionException(
+                    "Failed to enter value in: " + elementName, e);
+        }
     }
-    
-    
-    
-    
-    
+
+    // =========================================================================
+    // GET TEXT
+    // =========================================================================
+
+    public String getText(By locator, String elementName) {
+
+        try {
+            TestLogger.logAction("Getting text from: " + elementName);
+
+            WebElement element = waitManager.waitForVisible(locator);
+
+            String text = element.getText();
+
+            TestLogger.logStep("Text retrieved from: " + elementName);
+
+            return text;
+
+        } catch (Exception e) {
+
+            TestLogger.logFailure("GetText failed: " + elementName, e);
+
+            throw new ElementActionException(
+                    "Failed to get text from: " + elementName, e);
+        }
+    }
+
+    // =========================================================================
+    // SCROLL INTO VIEW
+    // =========================================================================
+
+    public void scrollIntoView(By locator, String elementName) {
+
+        try {
+            TestLogger.logAction("Scrolling to: " + elementName);
+
+            WebElement element = waitManager.waitForPresence(locator);
+
+            ((JavascriptExecutor) driver)
+                    .executeScript("arguments[0].scrollIntoView(true);", element);
+
+            TestLogger.logStep("Scrolled to: " + elementName);
+
+        } catch (Exception e) {
+
+            TestLogger.logFailure("Scroll failed: " + elementName, e);
+
+            throw new ElementActionException(
+                    "Failed to scroll to: " + elementName, e);
+        }
+    }
+
+    // =========================================================================
+    // IS DISPLAYED
+    // =========================================================================
+
+    public boolean isDisplayed(By locator, String elementName) {
+
+        try {
+            TestLogger.logAction("Checking visibility: " + elementName);
+
+            WebElement element = waitManager.waitForPresence(locator);
+
+            boolean displayed = element.isDisplayed();
+
+            TestLogger.logStep("Visibility checked: " + elementName);
+
+            return displayed;
+
+        } catch (Exception e) {
+
+            TestLogger.logFailure("Visibility check failed: " + elementName, e);
+
+            return false;
+        }
+    }
+
+    // =========================================================================
+    // FUTURE EXTENSIONS (IMPORTANT)
+    // =========================================================================
+    /*
+     * Planned improvements:
+     * ---------------------
+     * 1. Retry mechanism for flaky elements
+     * 2. Smart click (JS click fallback)
+     * 3. Highlight element before action
+     * 4. Screenshot capture on failure
+     * 5. Soft failure support
+     * 6. Action metrics (time taken per step)
+     */
 }
-
-
-
-
-
-

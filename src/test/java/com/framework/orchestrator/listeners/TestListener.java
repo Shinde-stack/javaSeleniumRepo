@@ -124,7 +124,7 @@ import org.testng.ITestListener;
 import org.testng.ITestResult;
 
 import com.framework.core.reporting.ReportManager;
-import com.framework.core.validation.AssertionEngine;
+import com.framework.core.assertion.AssertionEngine;
 import com.framework.core.logging.TestLogger;
 
 /**
