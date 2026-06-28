@@ -1,4 +1,4 @@
-package com.framework.core.validation;
+package com.framework.core.assertion;
 
 /**
  * Defines assertion execution behavior.

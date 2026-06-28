@@ -1,5 +1,7 @@
 package com.framework.core.reporting;
 
+import java.io.File;
+
 /**
  * ============================================================================
  * Class Name : ReportConstants
@@ -30,14 +32,14 @@ public final class ReportConstants {
     private ReportConstants() {}
 
     public static final String REPORT_DIR = //"target/reports/"
-    		System.getProperty("user.dir")
+    		System.getProperty("user.dir")+File.separator
     		;
     public static final String SCREENSHOT_DIR = //"target/reports/screenshots/"
-    		System.getProperty("user.dir")
+    		System.getProperty("user.dir")+File.separator
 
     		;
 
-    public static final String REPORT_FILE_NAME = "execution-report.html";
+    public static final String REPORT_FILE_NAME = "extentReport_fromReportConstants.html";
 
     public static final String SCREENSHOT_EXTENSION = ".png";
 }

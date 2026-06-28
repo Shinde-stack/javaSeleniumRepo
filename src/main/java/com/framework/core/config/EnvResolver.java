@@ -1,5 +1,7 @@
 package com.framework.core.config;
 
+import com.framework.core.logging.TestLogger;
+
 public class EnvResolver {
 	
 	
@@ -12,6 +14,9 @@ public class EnvResolver {
      */
 	
     public static String resolve() {
+
+    	   // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("resolve");
 
         // 1. JVM argument (highest priority)
         String env = System.getProperty("env");
@@ -26,6 +31,9 @@ public class EnvResolver {
             env = "qa";
         }
 
+        // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("env.toLowerCase() ->"+env.toLowerCase());
+        
         return env.toLowerCase();
     }
 }

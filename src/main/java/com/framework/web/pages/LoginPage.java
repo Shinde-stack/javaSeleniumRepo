@@ -1,38 +1,110 @@
 package com.framework.web.pages;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 
-import com.framework.core.driver.DriverManager;
 import com.framework.core.logging.TestLogger;
-import com.framework.web.actions.JsActions;
-import com.framework.web.actions.WaitActions;
-import com.framework.web.waits.WaitUtils;
+import com.framework.web.base.BasePage;
+import com.framework.web.waits.WaitManager;
 
 public class LoginPage extends BasePage {
 
-    private By username = By.id("//input[@id='username']");
-    private By password = By.id("//input[@id='password']");
-    private By loginBtn = By.id("//button[@id='submit']");
+    // =========================================================================
+    // LOCATORS
+    // =========================================================================
 
+    private By usernameInput = By.id("//input[@id='username']");
+    private By passwordInput = By.id("//input[@id='password']");
+    private By loginButton = By.id("//button[@id='submit']");
 
-    public void login(String user, String pass) {
-    	
-		TestLogger.logStep("LoginPage---login method start");
-
-		WaitActions wa = new WaitActions(driver);
-		JsActions ja = new JsActions(driver);
-		WaitUtils wu = new WaitUtils(driver);
-		wu.waitForPageLoad();
-	//	ja.waitForPageLoad(driver, 60);
-		ja.scrollTo(loginBtn);
-		wa.waitForVisible(loginBtn);	
-        actions.type(username, user);
-        actions.type(password, pass);
-        actions.click(loginBtn);
-		TestLogger.logStep("LoginPage---login method end");
-
+    private final By errorMessage   = By.id("errorMsg");
+    
+ // =========================================================================
+    // PAGE ACTIONS (LOW LEVEL)
+    // =========================================================================
+    public LoginPage open() {
+        driver.get(context.getConfig().getBaseUrl());
+        waits.waitForPageLoad();
+        return this;
     }
+    public void enterUsername(String username) {
+
+        TestLogger.logStep("Entering username");
+
+        actions.sendKeys(usernameInput, username, "Username field");
+    }
+
+    public void enterPassword(String password) {
+
+        TestLogger.logStep("Entering password");
+
+        actions.sendKeys(passwordInput, password, "Password field");
+    }
+
+    public void clickLogin() {
+
+        TestLogger.logStep("Clicking login button");
+
+        actions.click(loginButton, "Login button");
+    }
+
+    // =========================================================================
+    // BUSINESS FLOW (HIGH LEVEL METHOD)
+    // =========================================================================
+
+    /**
+     * COMPLETE LOGIN FLOW
+     *
+     * This is what tests SHOULD call.
+     */
+    public void login(String username, String password) {
+
+        TestLogger.logStep("Login flow started");
+        
+        enterUsername(username);
+        enterPassword(password);
+        clickLogin();
+
+        TestLogger.logStep("Login flow completed");
+    }
+
+    // =========================================================================
+    // VALIDATION METHODS
+    // =========================================================================
+
+    public String getErrorMessage() {
+
+        TestLogger.logStep("Fetching login error message");
+
+        return actions.getText(errorMessage, "Login error message");
+    }
+
+    public boolean isErrorDisplayed() {
+
+        TestLogger.logStep("Checking if error is displayed");
+
+        return actions.isDisplayed(errorMessage, "Error message");
+    }
+    
+    
+
+    // =========================================================================
+    // FUTURE IMPROVEMENTS
+    // =========================================================================
+    /*
+     * Planned upgrades:
+     * -----------------
+     * 1. Return type chaining:
+     *      login() → DashboardPage
+     *
+     * 2. Optional builder-style login:
+     *      new LoginPage().withUser().withPass().submit()
+     *
+     * 3. Component extraction:
+     *      LoginFormComponent (if reused across apps)
+     *
+     * 4. Negative test helpers:
+     *      loginExpectFailure()
+     */
     
     
 }

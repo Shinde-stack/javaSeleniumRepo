@@ -1,49 +1,83 @@
 package com.framework.core.lifecycle;
 
-import com.framework.core.config.ExecutionContext;
-import com.framework.core.context.ContextState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Controls context lifecycle transitions.
- *
- * Single place responsible for
- * changing context states.
- */
+import com.framework.core.config.ConfigLoader;
+import com.framework.core.config.EnvConfig;
+import com.framework.core.context.ContextState;
+import com.framework.core.context.ExecutionContext;
+import com.framework.core.context.ExecutionContextHolder;
+import com.framework.core.driver.DriverManager;
+
 public class ContextLifecycleManager {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(ContextLifecycleManager.class);
+
+    private final DriverManager driverManager = new DriverManager();
+
     /**
-     * Context initialized.
+     * Creates ExecutionContext.
+     *
+     * Does NOT initialize reporting.
+     * Does NOT perform test logging.
      */
-    public void initialize(ExecutionContext context) {
+    public ExecutionContext initializeContext() {
+
+        log.info("Initializing ExecutionContext");
+
+        EnvConfig config = new ConfigLoader().load();
+
+        ExecutionContext context = new ExecutionContext();
+
+        context.setConfig(config);
+        context.setState(ContextState.CREATED);
+
+        ExecutionContextHolder.setContext(context);
 
         context.setState(ContextState.INITIALIZED);
+
+        log.info("ExecutionContext initialized");
+
+        return context;
     }
 
     /**
-     * Test execution started.
+     * Initializes browser.
      */
-    public void startExecution(ExecutionContext context) {
+    public void initDriver(ExecutionContext context) {
+
+        log.info("Initializing WebDriver");
+
+        driverManager.initializeDriver(
+                context,
+                context.getConfig().getBrowserType(),
+                context.getConfig().isHeadless());
 
         context.setState(ContextState.RUNNING);
+
+        log.info("Driver initialized");
     }
 
     /**
-     * Cleanup started.
+     * Cleanup after every test.
      */
-    public void startCleanup(ExecutionContext context) {
+    public void cleanupContext(ExecutionContext context) {
 
-        context.setState(ContextState.CLEANING_UP);
-    }
+        log.info("Cleaning ExecutionContext");
 
-    /**
-     * Context destroyed.
-     */
-    public void destroy(ExecutionContext context) {
+        try {
 
-        context.driver().quitDriver();
+            driverManager.quitDriver(context);
 
-        context.db().closeConnection();
+        } finally {
 
-        context.setState(ContextState.DESTROYED);
+            context.setState(ContextState.DESTROYED);
+
+            ExecutionContextHolder.removeContext();
+
+            log.info("ExecutionContext destroyed");
+        }
     }
 }

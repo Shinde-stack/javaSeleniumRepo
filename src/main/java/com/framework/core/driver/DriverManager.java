@@ -3,7 +3,8 @@ package com.framework.core.driver;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 
-import com.framework.core.config.ExecutionContext;
+import com.framework.core.context.ExecutionContext;
+import com.framework.core.excepions.DriverException;
 
 /**
  * DriverManager
@@ -20,12 +21,6 @@ import com.framework.core.config.ExecutionContext;
  */
 public class DriverManager {
 
-//	private final DriverFactory driverFactory;
-//
-//	public DriverManager() {
-//		this.driverFactory = new DriverFactory();
-//	}
-
 	/**
 	 * Creates and stores driver inside current ExecutionContext.
 	 *
@@ -35,20 +30,15 @@ public class DriverManager {
 	 */
 	public void initializeDriver(ExecutionContext context, BrowserType browserType, boolean headless) {
 
-		WebDriver driver = DriverFactory.createDriver(browserType, headless);
+		WebDriver driver =
+		        DriverFactory.createDriver(browserType, headless);
 
-		context.driver().setDriver(driver);
-	}
+		if (driver == null) {
+		    throw new DriverException(
+		            "Failed to create driver: " + browserType);
+		}
 
-	/**
-	 * Returns current WebDriver.
-	 *
-	 * @param context Current execution context
-	 * @return Active WebDriver
-	 */
-	public WebDriver getDriver(ExecutionContext context) {
-
-		return context.driver().getDriver();
+		context.getDriverContext().setDriver(driver);
 	}
 
 	/**
@@ -58,13 +48,13 @@ public class DriverManager {
 	 */
 	public void quitDriver(ExecutionContext context) {
 		// Check if context and driver sub-context reference are active
-		if (context != null && context.driver() != null) {
+		if (context != null) {
 			try {
 				// Closes native browser application processes
-				context.driver().quitDriver();
+				context.getDriverContext().quitDriver();
 			} finally {
 				// CRITICAL: Wipe reference so next test block on this thread starts fresh
-				context.driver().setDriver(null);
+				context.getDriverContext().setDriver(null);
 			}
 		}
 	}
