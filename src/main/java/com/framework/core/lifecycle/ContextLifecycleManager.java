@@ -1,69 +1,83 @@
 package com.framework.core.lifecycle;
 
-import org.openqa.selenium.WebDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.aventstack.extentreports.ExtentTest;
 import com.framework.core.config.ConfigLoader;
 import com.framework.core.config.EnvConfig;
 import com.framework.core.context.ContextState;
 import com.framework.core.context.ExecutionContext;
 import com.framework.core.context.ExecutionContextHolder;
 import com.framework.core.driver.DriverManager;
-import com.framework.core.logging.TestLogger;
-import com.framework.core.reporting.ReportManager;
 
 public class ContextLifecycleManager {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(ContextLifecycleManager.class);
+
     private final DriverManager driverManager = new DriverManager();
 
-    public void startTest() {
+    /**
+     * Creates ExecutionContext.
+     *
+     * Does NOT initialize reporting.
+     * Does NOT perform test logging.
+     */
+    public ExecutionContext initializeContext() {
 
-        // 1. LOAD CONFIG
+        log.info("Initializing ExecutionContext");
+
         EnvConfig config = new ConfigLoader().load();
 
-        // 2. CREATE CONTEXT
         ExecutionContext context = new ExecutionContext();
+
+        context.setConfig(config);
+        context.setState(ContextState.CREATED);
+
         ExecutionContextHolder.setContext(context);
 
-        // 3. DRIVER INIT
-        driverManager.initializeDriver(context,
-                config.getBrowserType(),
-                config.isHeadless());
+        context.setState(ContextState.INITIALIZED);
 
-        WebDriver driver = context.getDriverContext().getDriver();
+        log.info("ExecutionContext initialized");
 
-        // 4. OPEN APP
-        driver.get(config.getBaseUrl());
-
-        // 5. REPORT INIT (CRITICAL ORDER FIX)
-        ExtentTest test =
-                ReportManager.createTest(Thread.currentThread().getName());
-
-        ReportManager.setTest(test);
-
-        // 6. STATE UPDATE
-        context.setState(ContextState.RUNNING);
-
-        TestLogger.logStep("Lifecycle initialized");
+        return context;
     }
 
-    public void endTest() {
+    /**
+     * Initializes browser.
+     */
+    public void initDriver(ExecutionContext context) {
 
-        ExecutionContext context =
-                ExecutionContextHolder.getContext();
+        log.info("Initializing WebDriver");
+
+        driverManager.initializeDriver(
+                context,
+                context.getConfig().getBrowserType(),
+                context.getConfig().isHeadless());
+
+        context.setState(ContextState.RUNNING);
+
+        log.info("Driver initialized");
+    }
+
+    /**
+     * Cleanup after every test.
+     */
+    public void cleanupContext(ExecutionContext context) {
+
+        log.info("Cleaning ExecutionContext");
 
         try {
-            // 1. DRIVER CLEANUP
-            driverManager.quitDriver(context);
 
-            // 2. STATE UPDATE
-            context.setState(ContextState.DESTROYED);
+            driverManager.quitDriver(context);
 
         } finally {
 
-            // 3. REMOVE THREAD DATA
-            ReportManager.removeTest();
-            ExecutionContextHolder.clear();
+            context.setState(ContextState.DESTROYED);
+
+            ExecutionContextHolder.removeContext();
+
+            log.info("ExecutionContext destroyed");
         }
     }
 }

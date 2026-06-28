@@ -155,10 +155,18 @@ public class ExecutionContext {
 
     @Override
     public String toString() {
-        return "ExecutionContext{" +
+    	
+    	String info = "ExecutionContext{" +
                 "state=" + state +
                 ", testName=" + metadataContext.getTestName() +
                 ", correlationId=" + metadataContext.getCorrelationId() +
                 '}';
+    	
+    	   // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("execution context info =>"+info);
+        TestLogger.logStep("metadataContext =>"+metadataContext);
+
+    	
+        return info;
     }
 }

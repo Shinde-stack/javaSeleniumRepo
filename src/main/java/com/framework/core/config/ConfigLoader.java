@@ -37,7 +37,7 @@ public class ConfigLoader {
 	 *
 	 * If any of these are missing, framework must NOT start.
 	 */
-	private static final List<String> REQUIRED_PROPERTIES = List.of("browser", "headless", "baseUrl");
+	private static final List<String> REQUIRED_PROPERTIES = ConfigConstants.MANDATORY_PROPERTIES;
 
 	/**
 	 * ENTRY POINT
@@ -68,7 +68,7 @@ public class ConfigLoader {
 		// Why this step exists:
 		// - Avoid repeated test failures
 		// - Provide single consolidated failure report
-		validate(properties);
+		validateProperties(properties);
 
 		// ------------------------------------------------------------
 		// STEP 3: TYPE CONVERSION (RAW → STRONG TYPE)
@@ -94,6 +94,9 @@ public class ConfigLoader {
 	 */
 	private Properties loadProperties() {
 
+	  	   // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("loadProperties");
+
 		// STEP 1.1: Identify runtime environment
 		// Example output: "qa"
 		String env = EnvResolver.resolve();
@@ -101,6 +104,7 @@ public class ConfigLoader {
 		// STEP 1.2: Build file name dynamically
 		// Example: config-qa.properties
 		String file = ConfigConstants.CONFIG_PATH + env + ConfigConstants.CONFIG_EXTENSION;
+        TestLogger.logStep("config file path ->"+file);
 
 		Properties props = new Properties();
 
@@ -134,7 +138,10 @@ public class ConfigLoader {
 	 * DESIGN: ------- - Collect all missing keys - Fail once with full report -
 	 * Avoid iterative failure cycles
 	 */
-	private void validate(Properties properties) {
+	private void validateProperties(Properties properties) {
+
+	  	   // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("validateProperties");
 
 		List<String> missingProperties = new ArrayList<>();
 
@@ -170,13 +177,9 @@ public class ConfigLoader {
 		// ---------------------------------------------------------
 		// CASE 2: SUCCESS PATH
 		// ---------------------------------------------------------
-		String successMessage = "Report manager -- old approach ---remove this - CONFIG VALIDATION PASSED";
-
-		TestLogger.logStep(
-		        "TestLogger - CONFIG VALIDATION PASSED");
-		try {
-			ReportManager.info(successMessage);
 	
+		try {
+			TestLogger.logStep("CONFIG VALIDATION PASSED");	
 		} catch (Exception ignored) {
 			// safe ignore if report not initialized yet
 		}
@@ -234,6 +237,9 @@ public class ConfigLoader {
 	 * Accessible throughout framework
 	 */
 	private EnvConfig buildConfig(Properties properties) {
+
+	  	   // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("buildConfig");
 
 	    // ---------------------------------------------------------
 	    // STEP 3.1
@@ -324,6 +330,8 @@ public class ConfigLoader {
 	    // Reporting
 	    config.setScreenshotOnFailure(screenshotOnFailure);
 
+		TestLogger.logStep("config ->"+config);
+		
 	    return config;
 	}
 

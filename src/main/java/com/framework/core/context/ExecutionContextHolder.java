@@ -1,5 +1,7 @@
 package com.framework.core.context;
 
+import com.framework.core.logging.TestLogger;
+
 public final class ExecutionContextHolder {
 
     private ExecutionContextHolder() {
@@ -9,6 +11,9 @@ public final class ExecutionContextHolder {
             new ThreadLocal<>();
 
     public static void setContext(ExecutionContext context) {
+
+    	   // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("setContext");
 
         if (context == null) {
             throw new IllegalArgumentException("ExecutionContext cannot be null");
@@ -24,6 +29,8 @@ public final class ExecutionContextHolder {
      * Validation should happen in BaseTest or lifecycle manager.
      */
     public static ExecutionContext getContext() {
+    	   // TEMP DEBUG LOG (REMOVE LATER)
+     //   TestLogger.logStep("getContext");
 
         ExecutionContext context = CONTEXT.get();
 
@@ -36,7 +43,10 @@ public final class ExecutionContextHolder {
         return context;
     }
 
-    public static void clear() {
+    public static void removeContext() {
+    	   // TEMP DEBUG LOG (REMOVE LATER)
+        TestLogger.logStep("removeContext");
+
         CONTEXT.remove();
     }
 }

@@ -4,6 +4,7 @@ import org.openqa.selenium.By;
 
 import com.framework.core.logging.TestLogger;
 import com.framework.web.base.BasePage;
+import com.framework.web.waits.WaitManager;
 
 public class LoginPage extends BasePage {
 
@@ -20,7 +21,11 @@ public class LoginPage extends BasePage {
  // =========================================================================
     // PAGE ACTIONS (LOW LEVEL)
     // =========================================================================
-
+    public LoginPage open() {
+        driver.get(context.getConfig().getBaseUrl());
+        waits.waitForPageLoad();
+        return this;
+    }
     public void enterUsername(String username) {
 
         TestLogger.logStep("Entering username");
@@ -54,7 +59,7 @@ public class LoginPage extends BasePage {
     public void login(String username, String password) {
 
         TestLogger.logStep("Login flow started");
-
+        
         enterUsername(username);
         enterPassword(password);
         clickLogin();
@@ -79,6 +84,8 @@ public class LoginPage extends BasePage {
 
         return actions.isDisplayed(errorMessage, "Error message");
     }
+    
+    
 
     // =========================================================================
     // FUTURE IMPROVEMENTS
