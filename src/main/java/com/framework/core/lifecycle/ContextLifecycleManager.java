@@ -9,6 +9,7 @@ import com.framework.core.context.ContextState;
 import com.framework.core.context.ExecutionContext;
 import com.framework.core.context.ExecutionContextHolder;
 import com.framework.core.driver.DriverManager;
+import com.framework.core.logging.TestLogger;
 
 public class ContextLifecycleManager {
 
@@ -63,21 +64,121 @@ public class ContextLifecycleManager {
     /**
      * Cleanup after every test.
      */
-    public void cleanupContext(ExecutionContext context) {
+    public void cleanupContext() {
 
-        log.info("Cleaning ExecutionContext");
+        ExecutionContext context = null;
 
         try {
 
-            driverManager.quitDriver(context);
+            context = ExecutionContextHolder.getContext();
+
+            if (driverManager != null) {
+                driverManager.quitDriver(context);
+            }
+
+        } catch (IllegalStateException ignored) {
+
+            // Context was never created.
+
+        } catch (Exception e) {
+
+            log.error("Cleanup failed", e);
 
         } finally {
 
-            context.setState(ContextState.DESTROYED);
+            if (context != null) {
+                context.setState(ContextState.DESTROYED);
+            }
 
             ExecutionContextHolder.removeContext();
 
             log.info("ExecutionContext destroyed");
         }
     }
+    
+    /**
+     * ============================================================================
+     * Starts complete framework lifecycle for ONE test execution.
+     * ============================================================================
+     *
+     * Responsibilities:
+     * -----------------
+     * 1. Load framework configuration
+     * 2. Create ExecutionContext
+     * 3. Bind ExecutionContext to current thread
+     * 4. Initialize browser driver
+     * 5. Launch application
+     * 6. Mark execution as RUNNING
+     *
+     * This is the ONLY public startup method used by TestListener.
+     *
+     * Returns:
+     * --------
+     * Current ExecutionContext for the running test.
+     *
+     * Future Expansion:
+     * -----------------
+     * Web:
+     *  - Browser initialization
+     *
+     * API:
+     *  - REST client initialization
+     *
+     * Database:
+     *  - Connection initialization
+     *
+     * Mobile:
+     *  - Appium driver initialization
+     *
+     * Cloud:
+     *  - Remote execution initialization
+     *
+     * ============================================================================
+     */
+    public ExecutionContext start() {
+
+        TestLogger.logStep("Lifecycle -> Starting framework");
+
+        // ---------------------------------------------------------
+        // STEP 1
+        // Create and initialize execution context.
+        // ---------------------------------------------------------
+        ExecutionContext context = initializeContext();
+
+        // ---------------------------------------------------------
+        // STEP 2
+        // Create browser driver.
+        // Driver is stored inside DriverContext.
+        // ---------------------------------------------------------
+        initDriver(context);
+
+        // ---------------------------------------------------------
+        // STEP 3
+        // Launch application.
+        // Browser opens configured Base URL.
+        // ---------------------------------------------------------
+        launchApplication(context);
+
+        // ---------------------------------------------------------
+        // STEP 4
+        // Framework ready.
+        // ---------------------------------------------------------
+        TestLogger.logStep("Lifecycle -> Framework started successfully");
+
+        return context;
+    }
+    
+    public void launchApplication(ExecutionContext context) {
+
+        TestLogger.logStep("Lifecycle -> Launching application");
+
+        context.getDriverContext()
+               .getDriver()
+               .get(context.getConfig().getBaseUrl());
+
+        TestLogger.logStep(
+            "Application opened : "
+            + context.getConfig().getBaseUrl());
+    }
+    
 }

@@ -95,7 +95,7 @@ public class ConfigLoader {
 	private Properties loadProperties() {
 
 	  	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("loadProperties");
+        TestLogger.logStep("temp---loadProperties");
 
 		// STEP 1.1: Identify runtime environment
 		// Example output: "qa"
@@ -104,7 +104,7 @@ public class ConfigLoader {
 		// STEP 1.2: Build file name dynamically
 		// Example: config-qa.properties
 		String file = ConfigConstants.CONFIG_PATH + env + ConfigConstants.CONFIG_EXTENSION;
-        TestLogger.logStep("config file path ->"+file);
+        TestLogger.logStep("temp---config file path ->"+file);
 
 		Properties props = new Properties();
 
@@ -120,6 +120,7 @@ public class ConfigLoader {
 
 			// STEP 1.5: Load key-value pairs into memory
 			props.load(input);
+	        TestLogger.logStep("temp---loaded props ->"+props);
 
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to load configuration file: " + file, e);

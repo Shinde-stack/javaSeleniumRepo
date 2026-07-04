@@ -13,6 +13,7 @@ import com.framework.core.lifecycle.ContextLifecycleManager;
 import com.framework.core.logging.TestLogger;
 import com.framework.core.reporting.ReportConstants;
 import com.framework.core.reporting.ReportManager;
+import com.framework.core.reporting.ScreenshotService;
 
 public class TestListener implements ITestListener, ISuiteListener {
 
@@ -31,7 +32,7 @@ public class TestListener implements ITestListener, ISuiteListener {
 
         ReportManager.initReport(reportPath);
     }
-
+    
     @Override
     public void onTestStart(ITestResult result) {
 
@@ -39,48 +40,55 @@ public class TestListener implements ITestListener, ISuiteListener {
                 result.getMethod().getMethodName();
 
         log.info("Starting Test : {}", testName);
+        
 
-        /*
-         * STEP 1
-         * Create Extent Test FIRST.
-         */
+        // -----------------------------------------------------
+        // STEP 1
+        // Reporting FIRST
+        // -----------------------------------------------------
 
-        ExtentTest extentTest =
-                ReportManager.createTest(testName);
+        ExtentTest test = ReportManager.createTest(testName);
 
-        ReportManager.setTest(extentTest);
+        ReportManager.setTest(test);
 
-        /*
-         * STEP 2
-         * Initialize framework.
-         */
+        // -----------------------------------------------------
+        // STEP 2
+        // Framework lifecycle
+        // -----------------------------------------------------
 
-        ExecutionContext context =
-                lifecycle.initializeContext();
+//        ExecutionContext context =
+//                lifecycle.initializeContext();
+//
+//        lifecycle.initDriver(context);
+//
+//        lifecycle.launchApplication(context);
+        
+        lifecycle.start();
 
-        lifecycle.initDriver(context);
+        // -----------------------------------------------------
+        // STEP 3
+        // Framework ready
+        // -----------------------------------------------------
 
-        /*
-         * STEP 3
-         * Safe to use TestLogger now.
-         */
-
-        TestLogger.logStep("Framework initialized");
+        TestLogger.logStep("Framework initialization completed");
     }
 
     @Override
     public void onTestSuccess(ITestResult result) {
 
-        TestLogger.logStep("Test Passed");
+        TestLogger.logStep("onTestSuccess-Test Passed");
 
         ReportManager.pass(result.getName());
+        
+        lifecycle.cleanupContext();
+        ReportManager.removeTest();
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
 
         TestLogger.logFailure(
-                "Test Failed",
+                "onTestFailure -Test Failed",
                 result.getThrowable());
 
         ReportManager.fail(result.getThrowable());
@@ -89,20 +97,30 @@ public class TestListener implements ITestListener, ISuiteListener {
          * Future:
          * ScreenshotService.capture()
          */
+        
+        TestLogger.logWarning(result.getTestName());
+      String screenShotPath =  ScreenshotService.capture(result.getTestName());// ISSUE - name is always NULL
+        ReportManager.addScreenshot(screenShotPath);
+        
+        lifecycle.cleanupContext();
+        ReportManager.removeTest();
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
 
-        TestLogger.logStep("Test Skipped");
+        TestLogger.logStep("onTestSkipped-Test Skipped");
 
         ReportManager.info(result.getName());
+        
+        lifecycle.cleanupContext();
+        ReportManager.removeTest();
     }
 
     @Override
     public void onFinish(ISuite suite) {
 
-        log.info("Suite Finished");
+        log.info("onFinish-Suite Finished");
 
         ReportManager.flush();
     }

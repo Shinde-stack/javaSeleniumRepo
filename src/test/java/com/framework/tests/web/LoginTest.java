@@ -26,7 +26,7 @@ import com.framework.web.actions.WebActions;
 
 //Option 2: annotation (not recommended for enterprise scale)
 @Listeners(TestListener.class)
-public class LoginTest extends ContextLifecycleManager {
+public class LoginTest {
 
 	@Test
 	public void verifyValidLogin() {
@@ -40,7 +40,7 @@ public class LoginTest extends ContextLifecycleManager {
 		loginPage.open();
 		// Step 2: perform login action
 		loginPage.login("testUser", "testPass");
-		TestLogger.logAction("login => testUser / testPass");
+		TestLogger.logStep("login STEP => testUser / testPass");
 
 		// Step 3: validation (example placeholder)
 		boolean isLoggedIn = true; // replace with real assertion logic
@@ -56,6 +56,9 @@ public class LoginTest extends ContextLifecycleManager {
 		assertionEngine.assertTrue(true, "success msg-3", "failure msg -3", Severity.HARD);
 
 		assertionEngine.assertTrue(false, "success msg-3", "failure msg -3", Severity.HARD);
+		
+		assertionEngine.assertTrue(false, "success msg-4 after hard fail", "failure msg -4 after hard fail", Severity.HARD);
+
 
 	}
 }

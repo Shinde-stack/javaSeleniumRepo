@@ -215,4 +215,22 @@ public final class TestLogger {
             return null;
         }
     }
+    
+    public static void logWarning(String message) {
+
+        EnvConfig config = getConfig();
+
+        if (config == null) {
+            LOG.warn(message);
+            return;
+        }
+
+        if (config.isLogToConsole()) {
+            LOG.warn(message);
+        }
+
+        if (config.isLogToReport()) {
+            ReportManager.warn(message);
+        }
+    }
 }

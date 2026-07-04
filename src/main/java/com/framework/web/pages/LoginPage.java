@@ -12,9 +12,9 @@ public class LoginPage extends BasePage {
     // LOCATORS
     // =========================================================================
 
-    private By usernameInput = By.id("//input[@id='username']");
-    private By passwordInput = By.id("//input[@id='password']");
-    private By loginButton = By.id("//button[@id='submit']");
+    private By usernameInput = By.xpath("//input[@id='userName']");
+    private By passwordInput = By.id("password");
+    private By loginButton = By.xpath("//button[contains(text(),'Login')]");
 
     private final By errorMessage   = By.id("errorMsg");
     

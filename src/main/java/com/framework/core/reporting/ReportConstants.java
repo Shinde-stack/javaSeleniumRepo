@@ -32,14 +32,14 @@ public final class ReportConstants {
     private ReportConstants() {}
 
     public static final String REPORT_DIR = //"target/reports/"
-    		System.getProperty("user.dir")+File.separator
+    		System.getProperty("user.dir")+File.separator+"HtmlReports"+File.separator
     		;
     public static final String SCREENSHOT_DIR = //"target/reports/screenshots/"
-    		System.getProperty("user.dir")+File.separator
+    		System.getProperty("user.dir")+File.separator+"screenshotsCaptured"+File.separator
 
     		;
 
-    public static final String REPORT_FILE_NAME = "extentReport_fromReportConstants.html";
+    public static final String REPORT_FILE_NAME = "extentReport_fromReportConstantsFromReportingPack.html";
 
     public static final String SCREENSHOT_EXTENSION = ".png";
 }

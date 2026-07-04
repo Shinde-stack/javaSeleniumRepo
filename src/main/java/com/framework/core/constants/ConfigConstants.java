@@ -22,4 +22,6 @@ public final class ConfigConstants {
 	 * Mandatory properties required for framework startup.
 	 */
 	public static final List<String> MANDATORY_PROPERTIES = List.of("browser", "headless", "baseUrl");
+	
+	
 }

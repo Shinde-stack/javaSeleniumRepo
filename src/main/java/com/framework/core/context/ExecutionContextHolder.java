@@ -13,7 +13,7 @@ public final class ExecutionContextHolder {
     public static void setContext(ExecutionContext context) {
 
     	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("setContext");
+        TestLogger.logStep("TEMP---ExecutionContextHolder.setContext");
 
         if (context == null) {
             throw new IllegalArgumentException("ExecutionContext cannot be null");
@@ -30,7 +30,7 @@ public final class ExecutionContextHolder {
      */
     public static ExecutionContext getContext() {
     	   // TEMP DEBUG LOG (REMOVE LATER)
-     //   TestLogger.logStep("getContext");
+    //    TestLogger.logStep("TEMP---ExecutionContextHolder.getContext");
 
         ExecutionContext context = CONTEXT.get();
 
@@ -45,7 +45,7 @@ public final class ExecutionContextHolder {
 
     public static void removeContext() {
     	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("removeContext");
+        TestLogger.logStep("TEMP---ExecutionContextHolder.removeContext");
 
         CONTEXT.remove();
     }

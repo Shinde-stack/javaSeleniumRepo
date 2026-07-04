@@ -212,6 +212,10 @@ public final class ReportManager {
 	public static void fail(Throwable throwable) {
 		getTest().fail(throwable);
 	}
+	
+	public static void warn (String message) {
+		getTest().warning(message);
+	}
 
 	// =========================================================================
 	// SCREENSHOTS

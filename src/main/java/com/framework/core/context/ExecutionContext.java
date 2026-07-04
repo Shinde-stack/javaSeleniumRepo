@@ -78,7 +78,7 @@ public class ExecutionContext {
         this.metadataContext = new TestMetadataContext();
 
         // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("ExecutionContext created with default state: CREATED");
+        TestLogger.logStep("temp --- ExecutionContext ,,, CONSTRUCTOR ,,, created with default state: CREATED");
     }
 
     // =========================================================================
@@ -92,7 +92,7 @@ public class ExecutionContext {
     public void setState(ContextState state) {
 
         // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("ExecutionContext state changed -> " + state);
+        TestLogger.logStep("temp --- ExecutionContext state changed -> " + state);
 
         this.state = state;
     }
@@ -128,7 +128,7 @@ public class ExecutionContext {
     public void setConfig(EnvConfig config) {
 
         // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("ExecutionContext config set");
+        TestLogger.logStep("temp --- ExecutionContext config set");
 
         this.config = config;
     }
@@ -163,8 +163,8 @@ public class ExecutionContext {
                 '}';
     	
     	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("execution context info =>"+info);
-        TestLogger.logStep("metadataContext =>"+metadataContext);
+        TestLogger.logStep("temp --- execution context info =>"+info);
+        TestLogger.logStep("temp --- metadataContext =>"+metadataContext);
 
     	
         return info;
