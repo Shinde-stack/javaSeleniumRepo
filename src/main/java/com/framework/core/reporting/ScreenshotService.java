@@ -1,5 +1,6 @@
 package com.framework.core.reporting;
 
+import com.framework.core.constants.ReportConstants;
 import com.framework.core.context.ExecutionContext;
 import com.framework.core.context.ExecutionContextHolder;
 import org.openqa.selenium.OutputType;

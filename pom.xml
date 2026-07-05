@@ -1,132 +1,422 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>1</groupId>
-  <artifactId>qa_automation_project</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  
-  <dependencies>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- ========================================================== -->
+    <!-- Maven Project Information                                  -->
+    <!-- ========================================================== -->
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Unique organization/project identifier.
+
+        Example:
+            com.framework
+            com.company
+            org.example
+
+        Used while publishing artifacts to repositories.
+    -->
+    <groupId>com.framework</groupId>
+
+    <!-- Name of this project -->
+    <artifactId>qa_automation_project</artifactId>
+
+    <!-- Current project version -->
+    <version>0.0.1-SNAPSHOT</version>
+
+    <!-- ========================================================== -->
+    <!-- Centralized Version Management                             -->
+    <!-- ========================================================== -->
+
+    <!--
+        All reusable project versions are defined here.
+
+        Benefits
+
+        ✔ Single place to upgrade versions
+        ✔ Cleaner dependencies
+        ✔ Avoid duplicate version numbers
+        ✔ Standard enterprise Maven practice
+
+        Usage
+
+            ${selenium.version}
+            ${java.version}
+            ${log4j2.version}
+
+        Maven automatically replaces these placeholders during build.
+    -->
+
+    <properties>
+
+        <!-- ================= Java Version ================= -->
+
+        <!--
+            Java language level used by compiler.
+
+            Change only this value when migrating
+            to newer Java versions.
+        -->
+        <java.version>21</java.version>
+
+        <!-- =============== Dependency Versions ============== -->
+
+        <selenium.version>4.20.0</selenium.version>
+
+        <testng.version>7.10.2</testng.version>
+
+        <webdrivermanager.version>5.8.0</webdrivermanager.version>
+
+        <slf4j.version>2.0.12</slf4j.version>
+
+        <log4j2.version>2.23.1</log4j2.version>
+
+        <extentreports.version>5.1.2</extentreports.version>
+
+        <commonsio.version>2.16.1</commonsio.version>
+
+        <!-- ================ Plugin Versions ================= -->
+
+        <!--
+            Maven plugins are separate from libraries.
+
+            Libraries are used by YOUR code.
+
+            Plugins are used by MAVEN while building
+            your project.
+        -->
+        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+
+    </properties>
 
 
-        <!-- Selenium -->
+    <!-- ========================================================== -->
+    <!-- Project Dependencies                                       -->
+    <!-- ========================================================== -->
+
+    <dependencies>
+
+        <!-- ====================================================== -->
+        <!-- Selenium Automation                                    -->
+        <!-- ====================================================== -->
+
+        <!--
+            Selenium Java
+
+            Responsibility
+
+            • Browser automation
+            • WebDriver APIs
+            • WebElement interactions
+            • Waits
+            • Mouse & Keyboard actions
+            • Browser management
+        -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.20.0</version>
+            <version>${selenium.version}</version>
         </dependency>
 
-        <!-- TestNG -->
+
+        <!-- ====================================================== -->
+        <!-- Test Framework                                         -->
+        <!-- ====================================================== -->
+
+        <!--
+            TestNG
+
+            Responsibility
+
+            • Test execution
+            • Assertions
+            • Test lifecycle
+            • Listeners
+            • Data Providers
+            • Parallel execution
+            • Test Groups
+            • XML Suites
+
+            Scope = test
+
+            Available only while running tests.
+        -->
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>7.10.2</version>
+            <version>${testng.version}</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- WebDriverManager -->
+
+        <!-- ====================================================== -->
+        <!-- Driver Management                                      -->
+        <!-- ====================================================== -->
+
+        <!--
+            WebDriverManager
+
+            Responsibility
+
+            • Automatically downloads browser drivers
+            • Resolves compatible driver versions
+            • Removes manual driver management
+        -->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
-            <version>5.8.0</version>
+            <version>${webdrivermanager.version}</version>
         </dependency>
 
-<!--
-SLF4J API (NOT RECOMMENDED IN CURRENT FRAMEWORK SETUP)
 
-Purpose:
-- Logging abstraction layer only (does NOT perform logging itself)
-- Requires a backend implementation (Logback / Log4j2 / etc.)
+        <!-- ====================================================== -->
+        <!-- Reporting                                               -->
+        <!-- ====================================================== -->
 
-Why NOT used here:
-- Framework already uses Log4j2 directly (log4j-api + log4j-core)
-- Adding SLF4J without standardizing backend creates dual logging pathways
-- Increases risk of classpath conflicts and duplicate logs in CI runs
+        <!--
+            ExtentReports
 
-Recommended approach for this framework:
-- Either use Log4j2 directly OR
-- Use SLF4J + Log4j2 binding (not Logback)
--->
-<dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>slf4j-api</artifactId>
-    <version>2.0.12</version>
-</dependency>
+            Responsibility
 
-
-<!--
-LOGBACK CLASSIC (NOT RECOMMENDED IN THIS FRAMEWORK)
-
-Purpose:
-- Concrete logging implementation for SLF4J
-- Alternative to Log4j2 logging backend
-
-Why NOT used here:
-- Conflicts with existing Log4j2 backend
-- Leads to multiple logging implementations on classpath
-- Can cause unpredictable logging binding at runtime
-- Increases debugging complexity in parallel execution environments
-
-Preferred in this framework:
-- Log4j2 is the single logging backend (log4j-api + log4j-core)
-- Avoid mixing logging frameworks in same runtime
--->
-<dependency>
-    <groupId>ch.qos.logback</groupId>
-    <artifactId>logback-classic</artifactId>
-    <version>1.4.14</version>
-</dependency>
+            • HTML Reports
+            • Step Logging
+            • Screenshots
+            • Categories
+            • Execution Summary
+            • Rich Dashboard
+        -->
+        <dependency>
+            <groupId>com.aventstack</groupId>
+            <artifactId>extentreports</artifactId>
+            <version>${extentreports.version}</version>
+        </dependency>
 
 
-<!--
-	
-	If later you migrate to best practice (optional future upgrade)
-	
-	
-SLF4J + Log4j2 Bridge (RECOMMENDED ENTERPRISE SETUP)
+        <!-- ====================================================== -->
+        <!-- Logging API                                             -->
+        <!-- ====================================================== -->
 
-Purpose:
-- Standard logging abstraction (SLF4J API)
-- Delegates actual logging to Log4j2 backend
-- Provides flexibility to swap logging implementations in future
+        <!--
+            SLF4J
 
-Benefits:
-- Clean architecture separation (API vs implementation)
-- No tight coupling to Log4j2 in business code
-- Industry-standard enterprise logging approach
--->
+            Simple Logging Facade for Java
 
- <!-- ExtentReports (Reporting engine) -->
+            Responsibility
 
-<dependency>
-    <groupId>com.aventstack</groupId>
-    <artifactId>extentreports</artifactId>
-    <version>5.1.2</version>
-</dependency>
+            • Logging API used by application code
+            • Provides abstraction over logging frameworks
 
+            NOTE
 
- <!-- Log4j2 (Logging framework) -->
+            Does NOT print logs.
 
-<dependency>
-    <groupId>org.apache.logging.log4j</groupId>
-    <artifactId>log4j-api</artifactId>
-    <version>2.23.1</version>
-</dependency>
-
-<dependency>
-    <groupId>org.apache.logging.log4j</groupId>
-    <artifactId>log4j-core</artifactId>
-    <version>2.23.1</version>
-</dependency>
+            It simply forwards logging requests
+            to an actual logging implementation.
+        -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
 
 
- <!-- Commons IO (useful for screenshot file handling) -->
+        <!-- ====================================================== -->
+        <!-- Logging Backend                                         -->
+        <!-- ====================================================== -->
 
-<dependency>
-    <groupId>commons-io</groupId>
-    <artifactId>commons-io</artifactId>
-    <version>2.16.1</version>
-</dependency>
+        <!--
+            Log4j2 API
 
-  </dependencies>
+            Responsibility
 
-  
+            Log4j public API.
+
+            Required by Log4j2 Core.
+        -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+
+        <!--
+            Log4j2 Core
+
+            Responsibility
+
+            Actual logging engine.
+
+            Performs
+
+            • Console logging
+            • File logging
+            • Rolling logs
+            • Async logging
+            • Pattern layouts
+            • Appenders
+
+            Reads configuration from
+
+                log4j2.xml
+        -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+
+        <!--
+            SLF4J → Log4j2 Bridge
+
+            Responsibility
+
+            Connects SLF4J with Log4j2.
+
+            Logging Flow
+
+                Framework Classes
+                        │
+                        ▼
+                    TestLogger
+                        │
+                        ▼
+                     SLF4J API
+                        │
+                        ▼
+              log4j-slf4j2-impl
+                        │
+                        ▼
+                    Log4j2 Core
+                        │
+                        ▼
+               Console / File
+
+            Enterprise Recommendation
+
+            ✔ One Logging API
+
+            ✔ One Logging Backend
+
+            ✔ Easy future migration
+        -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+
+
+        <!-- ====================================================== -->
+        <!-- File Utilities                                          -->
+        <!-- ====================================================== -->
+
+        <!--
+            Apache Commons IO
+
+            Responsibility
+
+            File utility library.
+
+            Used for
+
+            • Screenshot copy
+            • File operations
+            • Directory utilities
+            • Stream utilities
+        -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commonsio.version}</version>
+        </dependency>
+
+    </dependencies>
+
+
+    <!-- ========================================================== -->
+    <!-- Build Configuration                                        -->
+    <!-- ========================================================== -->
+
+    <!--
+        Build section controls HOW Maven builds the project.
+
+        Dependencies
+            ↓
+        Used by YOUR code.
+
+        Plugins
+            ↓
+        Used by MAVEN itself.
+
+        Maven plugins perform tasks like
+
+        • Compile Java
+        • Execute Tests
+        • Package JAR
+        • Copy Resources
+        • Generate Reports
+    -->
+
+    <build>
+
+        <plugins>
+
+            <!-- ================================================== -->
+            <!-- Java Compiler Plugin                               -->
+            <!-- ================================================== -->
+
+            <!--
+                Maven Compiler Plugin
+
+                Responsibility
+
+                Compiles Java source code.
+
+                Without this plugin
+
+                    Maven uses default compiler settings.
+
+                With this plugin
+
+                    Every developer machine and every CI server
+                    compiles the project exactly the same way.
+
+                Configuration
+
+                release
+
+                    Java language level.
+
+                    Equivalent to
+
+                        javac release 21
+
+                Recommended enterprise approach:
+                Use only <release> for modern JDKs (9+), as it
+                configures the language level, target bytecode,
+                and standard library consistently.
+            -->
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+
+                <artifactId>maven-compiler-plugin</artifactId>
+
+                <version>${maven.compiler.plugin.version}</version>
+
+                <configuration>
+
+                    <release>${java.version}</release>
+
+                </configuration>
+
+            </plugin>
+
+        </plugins>
+
+    </build>
+
 </project>

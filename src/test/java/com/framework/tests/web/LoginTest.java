@@ -6,6 +6,7 @@ import org.testng.annotations.Test;
 
 import com.framework.core.assertion.AssertionEngine;
 import com.framework.core.assertion.Severity;
+import com.framework.core.constants.ConfigConstants;
 import com.framework.core.lifecycle.ContextLifecycleManager;
 import com.framework.core.listeners.TestListener;
 import com.framework.core.logging.TestLogger;
@@ -31,7 +32,7 @@ public class LoginTest {
 	@Test
 	public void verifyValidLogin() {
 		TestLogger.logStep(
-				">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>LoginTest - verifyValidLogin>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+				">>>>>>>>>>>>>>>>>>>LoginTest - verifyValidLogin>>>>>>>>>>>>>>>>>>>>>>>");
 
 		// Page initialization (driver comes from ExecutionContext internally)
 		LoginPage loginPage = new LoginPage();
@@ -46,7 +47,7 @@ public class LoginTest {
 		boolean isLoggedIn = true; // replace with real assertion logic
 
 		Assert.assertTrue(isLoggedIn, "---------------Login failed - user not redirected to home page");
-
+		
 		AssertionEngine assertionEngine = new AssertionEngine();
 
 		assertionEngine.assertTrue(false, "success msg-1", "failure msg -1", Severity.SOFT);
@@ -60,5 +61,6 @@ public class LoginTest {
 		assertionEngine.assertTrue(false, "success msg-4 after hard fail", "failure msg -4 after hard fail", Severity.HARD);
 
 
+		
 	}
 }

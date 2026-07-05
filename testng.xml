@@ -13,7 +13,7 @@
 		<parameter name="browser" value="chrome" />
 
 		<classes>
-			<class name="com.framework.tests.LoginTest" />
+			<class name="com.framework.tests.web.LoginTest" />
 		</classes>
 
 	</test> <!-- Test -->

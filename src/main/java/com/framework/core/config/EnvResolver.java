@@ -6,11 +6,7 @@ import org.apache.logging.log4j.Logger;
 import com.framework.core.logging.TestLogger;
 
 public class EnvResolver {
-	
-    private static final Logger LOG =
-            LogManager.getLogger(TestLogger.class);
 
-	
     /**
      * Resolves runtime environment.
      *
@@ -35,12 +31,7 @@ public class EnvResolver {
         // 3. fallback default
         if (env == null || env.isBlank()) {
             env = "qa";
-            TestLogger.logStep("temp --- got the DEFAULT 'qa' env as no env found in 'System.getProperty' or 'System.getenv(\"ENV\")' ");
-            LOG.warn("temp --- got the DEFAULT 'qa' env as no env found in 'System.getProperty' or 'System.getenv(\"ENV\")' ");
         }
-
-        // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("temp ---env set ->"+env.toLowerCase());
         
         return env.toLowerCase();
     }

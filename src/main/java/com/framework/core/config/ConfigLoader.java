@@ -103,7 +103,7 @@ public class ConfigLoader {
 
 		// STEP 1.2: Build file name dynamically
 		// Example: config-qa.properties
-		String file = ConfigConstants.CONFIG_PATH + env + ConfigConstants.CONFIG_EXTENSION;
+		String file = ConfigConstants.CONFIG_DIRECTORY + env + ConfigConstants.CONFIG_EXTENSION;
         TestLogger.logStep("temp---config file path ->"+file);
 
 		Properties props = new Properties();
@@ -331,7 +331,7 @@ public class ConfigLoader {
 	    // Reporting
 	    config.setScreenshotOnFailure(screenshotOnFailure);
 
-		TestLogger.logStep("config ->"+config);
+		TestLogger.logStep("config ----->"+config);
 		
 	    return config;
 	}

@@ -8,10 +8,10 @@ import org.testng.ITestListener;
 import org.testng.ITestResult;
 
 import com.aventstack.extentreports.ExtentTest;
+import com.framework.core.constants.ReportConstants;
 import com.framework.core.context.ExecutionContext;
 import com.framework.core.lifecycle.ContextLifecycleManager;
 import com.framework.core.logging.TestLogger;
-import com.framework.core.reporting.ReportConstants;
 import com.framework.core.reporting.ReportManager;
 import com.framework.core.reporting.ScreenshotService;
 
@@ -99,7 +99,7 @@ public class TestListener implements ITestListener, ISuiteListener {
          */
         
         TestLogger.logWarning(result.getTestName());
-      String screenShotPath =  ScreenshotService.capture(result.getTestName());// ISSUE - name is always NULL
+      String screenShotPath =  ScreenshotService.capture(result.getMethod().getMethodName());// ISSUE - name is always NULL
         ReportManager.addScreenshot(screenShotPath);
         
         lifecycle.cleanupContext();
