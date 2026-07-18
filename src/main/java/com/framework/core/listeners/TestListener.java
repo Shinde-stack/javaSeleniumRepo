@@ -15,6 +15,17 @@ import com.framework.core.logging.TestLogger;
 import com.framework.core.reporting.ReportManager;
 import com.framework.core.reporting.ScreenshotService;
 
+/**
+ * TestListener
+ *
+ * TestNG hook that ties reporting and framework lifecycle to test execution.
+ *
+ * Flow:
+ *   onStart (suite)  → init ExtentReports
+ *   onTestStart        → create ExtentTest → lifecycle.start() (context + driver + base URL)
+ *   onTestSuccess/Fail/Skip → update report → screenshot on fail → lifecycle.cleanupContext()
+ *   onFinish (suite)   → flush report
+ */
 public class TestListener implements ITestListener, ISuiteListener {
 
     private static final Logger log =
@@ -42,20 +53,12 @@ public class TestListener implements ITestListener, ISuiteListener {
         log.info("Starting Test : {}", testName);
         
 
-        // -----------------------------------------------------
-        // STEP 1
-        // Reporting FIRST
-        // -----------------------------------------------------
-
+        // Step 1: bind ExtentTest to current thread before framework startup logs
         ExtentTest test = ReportManager.createTest(testName);
 
         ReportManager.setTest(test);
 
-        // -----------------------------------------------------
-        // STEP 2
-        // Framework lifecycle
-        // -----------------------------------------------------
-
+        // Step 2: bootstrap context, driver, and application URL
 //        ExecutionContext context =
 //                lifecycle.initializeContext();
 //
@@ -64,11 +67,6 @@ public class TestListener implements ITestListener, ISuiteListener {
 //        lifecycle.launchApplication(context);
         
         lifecycle.start();
-
-        // -----------------------------------------------------
-        // STEP 3
-        // Framework ready
-        // -----------------------------------------------------
 
         TestLogger.logStep("Framework initialization completed");
     }
@@ -93,11 +91,6 @@ public class TestListener implements ITestListener, ISuiteListener {
 
         ReportManager.fail(result.getThrowable());
 
-        /*
-         * Future:
-         * ScreenshotService.capture()
-         */
-        
         TestLogger.logWarning(result.getTestName());
       String screenShotPath =  ScreenshotService.capture(result.getMethod().getMethodName());// ISSUE - name is always NULL
         ReportManager.addScreenshot(screenShotPath);

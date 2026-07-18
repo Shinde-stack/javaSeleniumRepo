@@ -9,24 +9,14 @@ import com.framework.core.excepions.DriverException;
 /**
  * DriverFactory
  *
- * Responsibility: ---------------- Create browser driver instances.
+ * Creates browser-specific WebDriver instances.
  *
- * IMPORTANT: ---------- DriverFactory DOES NOT: - Store drivers - Manage driver
- * lifecycle - Quit drivers - Interact with context
+ * Flow:
+ *   DriverManager → createDriver(browserType, headless) → DriverOptionsBuilder → new ChromeDriver/EdgeDriver
  *
- * Those responsibilities belong to DriverManager.
- *
- * Design Principle: ----------------- Single Responsibility Principle (SRP)
+ * Stateless factory: does not store, quit, or bind drivers to ExecutionContext.
  */
 public class DriverFactory {
-
-	/**
-	 * Creates browser driver.
-	 *
-	 * @param browserType Browser to launch
-	 * @param headless    Headless execution flag
-	 * @return WebDriver instance
-	 */
 
 	public static WebDriver createDriver(BrowserType browserType, boolean headless) {
 

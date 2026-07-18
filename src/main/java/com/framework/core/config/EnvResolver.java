@@ -3,36 +3,41 @@ package com.framework.core.config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.framework.core.constants.ConfigConstants;
+import com.framework.core.excepions.FrameworkException;
 import com.framework.core.logging.TestLogger;
 
+/**
+ * EnvResolver
+ *
+ * Resolves the active environment name used to pick a properties file.
+ *
+ * Flow: resolve() → System property "env" → OS env "ENV" → default "qa" →
+ * ConfigLoader builds path config/{env}.properties
+ */
 public class EnvResolver {
 
-    /**
-     * Resolves runtime environment.
-     *
-     * Priority order:
-     * 1. System property (-Denv=qa)
-     * 2. Default fallback (qa)
-     */
-	
-    public static String resolve() {
+	public static String resolve() {
 
-    	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("temp ---EnvResolver.resolve");
+		TestLogger.logStep("temp ---EnvResolver.resolve");
 
-        // 1. JVM argument (highest priority)
-        String env = System.getProperty("env");
+		// Priority 1: JVM argument (-Denv=qa)
+		String env = System.getProperty("env");
 
-        // 2. OS / CI environment variable
-        if (env == null || env.isBlank()) {
-            env = System.getenv("ENV");
-        }
+		// Priority 2: OS / CI environment variable
+		if (env == null || env.isBlank()) {
+			env = System.getenv("ENV");
+		}
 
-        // 3. fallback default
-        if (env == null || env.isBlank()) {
-            env = "qa";
-        }
-        
-        return env.toLowerCase();
-    }
+		// Priority 3: default fallback
+		if (ConfigConstants.isDefaultFallbackEnvExpected) {
+			if (env == null || env.isBlank()) {
+				env = ConfigConstants.default_fallback_env;
+			}
+		} else {
+			throw new FrameworkException("Enviornment NOT FOUND to the EnvResolver class.");
+		}
+
+		return env.toLowerCase();
+	}
 }

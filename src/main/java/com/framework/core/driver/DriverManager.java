@@ -9,24 +9,17 @@ import com.framework.core.excepions.DriverException;
 /**
  * DriverManager
  *
- * Responsibility: ---------------- Manage WebDriver lifecycle.
+ * Manages WebDriver lifecycle for a single test execution.
  *
- * Responsibilities: ----------------- Initialize driver Store driver in
- * ExecutionContext Retrieve driver Close driver
+ * Flow:
+ *   ContextLifecycleManager.initDriver() → createDriver via factory → store in DriverContext → quit on cleanup
  *
- * Architecture: -------------
- *
- * Test ↓ BaseTest ↓ DriverManager ↓ DriverFactory ↓ Browser Driver
- *
+ * Does not create browser options or read configuration; receives BrowserType from ExecutionContext config.
  */
 public class DriverManager {
 
 	/**
-	 * Creates and stores driver inside current ExecutionContext.
-	 *
-	 * @param context     Current execution context
-	 * @param browserType Browser type
-	 * @param headless    Headless mode flag
+	 * Creates a driver and stores it in the current thread's DriverContext.
 	 */
 	public void initializeDriver(ExecutionContext context, BrowserType browserType, boolean headless) {
 
@@ -42,18 +35,13 @@ public class DriverManager {
 	}
 
 	/**
-	 * Safely closes browser.
-	 *
-	 * @param context Current execution context
+	 * Quits the browser and clears the driver reference so the next test starts clean.
 	 */
 	public void quitDriver(ExecutionContext context) {
-		// Check if context and driver sub-context reference are active
 		if (context != null) {
 			try {
-				// Closes native browser application processes
 				context.getDriverContext().quitDriver();
 			} finally {
-				// CRITICAL: Wipe reference so next test block on this thread starts fresh
 				context.getDriverContext().setDriver(null);
 			}
 		}

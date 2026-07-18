@@ -11,6 +11,17 @@ import com.framework.core.context.ExecutionContextHolder;
 import com.framework.core.driver.DriverManager;
 import com.framework.core.logging.TestLogger;
 
+/**
+ * ContextLifecycleManager
+ *
+ * Orchestrates per-test framework startup and teardown.
+ *
+ * Flow:
+ *   start() → load config → create ExecutionContext → init driver → navigate to baseUrl
+ *   cleanupContext() → quit driver → mark DESTROYED → clear ThreadLocal
+ *
+ * Called exclusively from TestListener on each test method boundary.
+ */
 public class ContextLifecycleManager {
 
     private static final Logger log =
@@ -19,10 +30,7 @@ public class ContextLifecycleManager {
     private final DriverManager driverManager = new DriverManager();
 
     /**
-     * Creates ExecutionContext.
-     *
-     * Does NOT initialize reporting.
-     * Does NOT perform test logging.
+     * Loads config, creates context, and binds it to the current thread.
      */
     public ExecutionContext initializeContext() {
 
@@ -45,7 +53,7 @@ public class ContextLifecycleManager {
     }
 
     /**
-     * Initializes browser.
+     * Creates WebDriver from config and marks context as RUNNING.
      */
     public void initDriver(ExecutionContext context) {
 
@@ -62,7 +70,7 @@ public class ContextLifecycleManager {
     }
 
     /**
-     * Cleanup after every test.
+     * Quits driver and removes ExecutionContext from ThreadLocal after each test.
      */
     public void cleanupContext() {
 
@@ -77,8 +85,6 @@ public class ContextLifecycleManager {
             }
 
         } catch (IllegalStateException ignored) {
-
-            // Context was never created.
 
         } catch (Exception e) {
 
@@ -97,77 +103,26 @@ public class ContextLifecycleManager {
     }
     
     /**
-     * ============================================================================
-     * Starts complete framework lifecycle for ONE test execution.
-     * ============================================================================
-     *
-     * Responsibilities:
-     * -----------------
-     * 1. Load framework configuration
-     * 2. Create ExecutionContext
-     * 3. Bind ExecutionContext to current thread
-     * 4. Initialize browser driver
-     * 5. Launch application
-     * 6. Mark execution as RUNNING
-     *
-     * This is the ONLY public startup method used by TestListener.
-     *
-     * Returns:
-     * --------
-     * Current ExecutionContext for the running test.
-     *
-     * Future Expansion:
-     * -----------------
-     * Web:
-     *  - Browser initialization
-     *
-     * API:
-     *  - REST client initialization
-     *
-     * Database:
-     *  - Connection initialization
-     *
-     * Mobile:
-     *  - Appium driver initialization
-     *
-     * Cloud:
-     *  - Remote execution initialization
-     *
-     * ============================================================================
+     * Full startup sequence invoked at the beginning of each test.
      */
     public ExecutionContext start() {
 
         TestLogger.logStep("Lifecycle -> Starting framework");
 
-        // ---------------------------------------------------------
-        // STEP 1
-        // Create and initialize execution context.
-        // ---------------------------------------------------------
         ExecutionContext context = initializeContext();
 
-        // ---------------------------------------------------------
-        // STEP 2
-        // Create browser driver.
-        // Driver is stored inside DriverContext.
-        // ---------------------------------------------------------
         initDriver(context);
 
-        // ---------------------------------------------------------
-        // STEP 3
-        // Launch application.
-        // Browser opens configured Base URL.
-        // ---------------------------------------------------------
         launchApplication(context);
 
-        // ---------------------------------------------------------
-        // STEP 4
-        // Framework ready.
-        // ---------------------------------------------------------
         TestLogger.logStep("Lifecycle -> Framework started successfully");
 
         return context;
     }
     
+    /**
+     * Opens the configured base URL in the active browser.
+     */
     public void launchApplication(ExecutionContext context) {
 
         TestLogger.logStep("Lifecycle -> Launching application");

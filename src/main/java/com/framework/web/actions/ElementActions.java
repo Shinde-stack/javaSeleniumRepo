@@ -10,28 +10,15 @@ import com.framework.web.exceptions.ElementActionException;
 import com.framework.web.waits.WaitManager;
 
 /**
- * ============================================================================
- * Class Name : ElementActions
- * ============================================================================
+ * ElementActions
  *
- * ROLE:
- * -----
- * Central wrapper for ALL Selenium interactions.
+ * Primary UI interaction layer for page objects. Wraps waits, logging, and exception translation.
  *
- * RESPONSIBILITIES:
- * ------------------
- * - Click actions
- * - Send keys
- * - Get text
- * - Clear field
- * - Scroll (optional)
- * - Logging + reporting integration
- * - Exception wrapping
+ * Flow:
+ *   page method → ElementActions.click/sendKeys/getText → WaitManager stabilizes element
+ *   → Selenium action → log success, or catch and throw ElementActionException
  *
- * RULE:
- * -----
- * NEVER use WebDriver directly in Page classes.
- * All interactions MUST go through this class.
+ * Page classes must not call WebDriver directly; use this class instead.
  */
 public class ElementActions {
 
@@ -42,10 +29,6 @@ public class ElementActions {
         this.driver = driver;
         this.waitManager = waitManager;
     }
-
-    // =========================================================================
-    // CLICK ACTION
-    // =========================================================================
 
     public void click(By locator, String elementName) {
 
@@ -67,10 +50,6 @@ public class ElementActions {
         }
     }
 
-    // =========================================================================
-    // SEND KEYS
-    // =========================================================================
-
     public void sendKeys(By locator, String value, String elementName) {
 
         try {
@@ -91,10 +70,6 @@ public class ElementActions {
                     "Failed to enter value in: " + elementName, e);
         }
     }
-
-    // =========================================================================
-    // GET TEXT
-    // =========================================================================
 
     public String getText(By locator, String elementName) {
 
@@ -118,10 +93,6 @@ public class ElementActions {
         }
     }
 
-    // =========================================================================
-    // SCROLL INTO VIEW
-    // =========================================================================
-
     public void scrollIntoView(By locator, String elementName) {
 
         try {
@@ -142,10 +113,6 @@ public class ElementActions {
                     "Failed to scroll to: " + elementName, e);
         }
     }
-
-    // =========================================================================
-    // IS DISPLAYED
-    // =========================================================================
 
     public boolean isDisplayed(By locator, String elementName) {
 
@@ -168,17 +135,4 @@ public class ElementActions {
         }
     }
 
-    // =========================================================================
-    // FUTURE EXTENSIONS (IMPORTANT)
-    // =========================================================================
-    /*
-     * Planned improvements:
-     * ---------------------
-     * 1. Retry mechanism for flaky elements
-     * 2. Smart click (JS click fallback)
-     * 3. Highlight element before action
-     * 4. Screenshot capture on failure
-     * 5. Soft failure support
-     * 6. Action metrics (time taken per step)
-     */
 }

@@ -5,12 +5,18 @@ import org.openqa.selenium.By;
 import com.framework.core.logging.TestLogger;
 import com.framework.web.base.BasePage;
 import com.framework.web.waits.WaitManager;
+import com.framework.web.waits.WaitManager;
 
+/**
+ * LoginPage
+ *
+ * Page object for the login screen at the configured base URL.
+ *
+ * Flow:
+ *   open() navigates and waits for page load → enterUsername/enterPassword/clickLogin via ElementActions
+ *   → login() composes the full happy-path → getErrorMessage/isErrorDisplayed for negative checks
+ */
 public class LoginPage extends BasePage {
-
-    // =========================================================================
-    // LOCATORS
-    // =========================================================================
 
     private By usernameInput = By.xpath("//input[@id='userName']");
     private By passwordInput = By.id("password");
@@ -18,14 +24,15 @@ public class LoginPage extends BasePage {
 
     private final By errorMessage   = By.id("errorMsg");
     
- // =========================================================================
-    // PAGE ACTIONS (LOW LEVEL)
-    // =========================================================================
+    /**
+     * Navigates to base URL and waits for document ready state.
+     */
     public LoginPage open() {
         driver.get(context.getConfig().getBaseUrl());
         waits.waitForPageLoad();
         return this;
     }
+
     public void enterUsername(String username) {
 
         TestLogger.logStep("Entering username");
@@ -47,14 +54,8 @@ public class LoginPage extends BasePage {
         actions.click(loginButton, "Login button");
     }
 
-    // =========================================================================
-    // BUSINESS FLOW (HIGH LEVEL METHOD)
-    // =========================================================================
-
     /**
-     * COMPLETE LOGIN FLOW
-     *
-     * This is what tests SHOULD call.
+     * High-level login flow intended for test use.
      */
     public void login(String username, String password) {
 
@@ -66,10 +67,6 @@ public class LoginPage extends BasePage {
 
         TestLogger.logStep("Login flow completed");
     }
-
-    // =========================================================================
-    // VALIDATION METHODS
-    // =========================================================================
 
     public String getErrorMessage() {
 
@@ -84,27 +81,4 @@ public class LoginPage extends BasePage {
 
         return actions.isDisplayed(errorMessage, "Error message");
     }
-    
-    
-
-    // =========================================================================
-    // FUTURE IMPROVEMENTS
-    // =========================================================================
-    /*
-     * Planned upgrades:
-     * -----------------
-     * 1. Return type chaining:
-     *      login() → DashboardPage
-     *
-     * 2. Optional builder-style login:
-     *      new LoginPage().withUser().withPass().submit()
-     *
-     * 3. Component extraction:
-     *      LoginFormComponent (if reused across apps)
-     *
-     * 4. Negative test helpers:
-     *      loginExpectFailure()
-     */
-    
-    
 }

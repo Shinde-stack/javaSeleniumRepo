@@ -1,7 +1,14 @@
 package com.framework.core.constants;
 
 /**
- * Wait related framework constants.
+ * WaitConstants
+ *
+ * Default timeout values for explicit waits across the web layer.
+ *
+ * Flow:
+ *   WaitManager.createWait() reads EXPLICIT_WAIT_SECONDS → applied to all ExpectedConditions calls
+ *
+ * Future: override per environment via EnvConfig instead of hardcoded constants.
  */
 public final class WaitConstants {
 

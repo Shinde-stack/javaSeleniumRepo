@@ -1,28 +1,14 @@
 package com.framework.core.excepions;
+
 /**
- * ============================================================================
- * Class Name : ElementActionException
- * ============================================================================
+ * ElementActionException
  *
- * ROLE:
- * -----
- * Custom runtime exception for all UI element interaction failures.
+ * Wraps Selenium failures from UI interactions with a readable framework message.
  *
- * WHY IT EXISTS:
- * --------------
- * Selenium exceptions are low-level and not readable in reports.
+ * Flow:
+ *   ElementActions catches Selenium exception → throw ElementActionException → TestListener.onTestFailure
  *
- * This class:
- * - wraps Selenium exceptions
- * - adds framework context
- * - improves debugging clarity
- *
- * EXAMPLE USE CASES:
- * ------------------
- * - Click failure
- * - Element not found
- * - Timeout waiting for element
- * - Stale element reference
+ * Note: a duplicate exists under com.framework.web.exceptions; ElementActions uses the web package copy.
  */
 public class ElementActionException extends RuntimeException {
 

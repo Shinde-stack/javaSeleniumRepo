@@ -8,6 +8,15 @@ import com.framework.core.logging.TestLogger;
 import com.framework.web.actions.ElementActions;
 import com.framework.web.waits.WaitManager;
 
+/**
+ * BasePage
+ *
+ * Parent for all page objects. Resolves driver and action helpers from ExecutionContext.
+ *
+ * Flow:
+ *   TestListener starts lifecycle → page constructor reads ExecutionContextHolder
+ *   → builds WaitManager + ElementActions → subclass methods interact via actions/waits
+ */
 public abstract class BasePage {
 
     protected final ExecutionContext context;

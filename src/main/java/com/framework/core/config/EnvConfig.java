@@ -3,33 +3,22 @@ package com.framework.core.config;
 import com.framework.core.driver.BrowserType;
 
 /**
- * Runtime configuration loaded from properties file.
+ * EnvConfig
  *
- * Populated by:
- * ConfigLoader
+ * Strongly typed runtime configuration loaded once per test from properties file.
  *
- * Used by:
- * BaseTest
- * DriverManager
- * Logger
- * Reporting
- * Screenshot Service
+ * Flow:
+ *   ConfigLoader.load() → EnvConfig → ExecutionContext.setConfig() → consumed by driver, logger, reporting
+ *
+ * Populated via setters in ConfigLoader; read-only from the perspective of tests and pages.
  */
 public class EnvConfig {
-
-    // ---------------------------------------------------------
-    // Browser Configuration
-    // ---------------------------------------------------------
 
     private BrowserType browserType;
 
     private boolean headless;
 
     private String baseUrl;
-
-    // ---------------------------------------------------------
-    // Logging Configuration
-    // ---------------------------------------------------------
 
     private boolean logToConsole;
 
@@ -39,15 +28,7 @@ public class EnvConfig {
 
     private boolean logWaitActions;
 
-    // ---------------------------------------------------------
-    // Reporting Configuration
-    // ---------------------------------------------------------
-
     private boolean screenshotOnFailure;
-
-    // ---------------------------------------------------------
-    // Getters / Setters
-    // ---------------------------------------------------------
 
     public BrowserType getBrowserType() {
         return browserType;

@@ -6,14 +6,14 @@ import org.openqa.selenium.WebDriver;
 import com.framework.core.logging.TestLogger;
 
 /**
- * ============================================================================
  * WebActions
- * ============================================================================
  *
- * Responsibility: - Direct browser interactions - NO waits - NO retry logic
+ * Low-level browser operations without explicit waits or retry logic.
  *
- * Design rule: - This class assumes element is already stable
- * ============================================================================
+ * Flow:
+ *   caller must ensure element stability before use → direct WebDriver call → log action
+ *
+ * Prefer ElementActions for page objects; this class is for cases where the element is already stable.
  */
 public class WebActions {
 

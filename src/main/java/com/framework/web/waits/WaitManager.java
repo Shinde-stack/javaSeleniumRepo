@@ -14,44 +14,20 @@ import com.framework.core.driver.DriverManager;
 import com.framework.core.logging.TestLogger;
 
 /**
- * =============================================================================
- * Class Name : WaitUtils
- * =============================================================================
- * Responsibility:
- * Centralized explicit wait utility for framework.
+ * WaitManager
  *
- * Why this class exists:
- * - Avoid hardcoded waits (Thread.sleep)
- * - Avoid duplicating WebDriverWait logic everywhere
- * - Improve maintainability
- * - Provide consistent synchronization strategy
+ * Central explicit-wait utility; all synchronization should go through this class.
  *
- * Framework Rule:
- * All waits should go through this class.
+ * Flow:
+ *   ElementActions/BasePage → waitForVisible/Clickable/Presence/etc.
+ *   → WebDriverWait + ExpectedConditions → return stable WebElement
  *
- * Example:
- *
- * waitUtils.waitForVisible(loginButton);
- * waitUtils.waitForClickable(submitButton);
- * =============================================================================
+ * Timeout defaults to WaitConstants.EXPLICIT_WAIT_SECONDS for every wait.
  */
-
 public class WaitManager {
-
-    /**
-     * Default explicit wait timeout.
-     *
-     * Future Improvement:
-     * Read from framework configuration file. -----------------------------------
-     */
 
     private final WebDriver driver;
 
-    /**
-     * Constructor
-     *
-     * @param driver Active WebDriver instance
-     */
     public WaitManager(WebDriver driver) {
         this.driver = driver;
     }
@@ -64,17 +40,6 @@ public class WaitManager {
     }
     
 
-    /**
-     * Wait until element becomes visible.
-     *
-     * Use when:
-     * - Element should appear on screen
-     * - Before reading text
-     * - Before entering data
-     *
-     * @param locator Element locator
-     * @return Visible WebElement
-     */
     public WebElement waitForVisible(By locator) {
 
         TestLogger.logWait(
@@ -84,16 +49,6 @@ public class WaitManager {
                 ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
-    /**
-     * Wait until element becomes clickable.
-     *
-     * Use when:
-     * - Element must be clicked
-     * - Avoid click interception issues
-     *
-     * @param locator Element locator
-     * @return Clickable WebElement
-     */
     public WebElement waitForClickable(By locator) {
 
         TestLogger.logWait(
@@ -103,18 +58,6 @@ public class WaitManager {
                 ExpectedConditions.elementToBeClickable(locator));
     }
 
-    /**
-     * Wait until element exists in DOM.
-     *
-     * Element may not yet be visible.
-     *
-     * Useful for:
-     * - Lazy loaded elements
-     * - Dynamic content
-     *
-     * @param locator Element locator
-     * @return Located WebElement
-     */
     public WebElement waitForPresence(By locator) {
 
         TestLogger.logWait(
@@ -124,17 +67,6 @@ public class WaitManager {
                 ExpectedConditions.presenceOfElementLocated(locator));
     }
 
-    /**
-     * Wait until element disappears.
-     *
-     * Useful for:
-     * - Loader/spinner
-     * - Progress bars
-     * - Success/error messages
-     *
-     * @param locator Element locator
-     * @return true if element disappeared
-     */
     public boolean waitForInvisible(By locator) {
 
         TestLogger.logWait(
@@ -145,15 +77,7 @@ public class WaitManager {
     }
 
     /**
-     * Wait until page loading completes.
-     *
-     * Uses:
-     * document.readyState == complete
-     *
-     * Useful after:
-     * - Page navigation
-     * - Refresh
-     * - Redirect
+     * Waits until document.readyState equals "complete".
      */
     public void waitForPageLoad() {
 
@@ -167,19 +91,6 @@ public class WaitManager {
                 .equals("complete"));
     }
 
-    /**
-     * Generic custom timeout visibility wait.
-     *
-     * Use when:
-     * Specific operation needs longer/shorter timeout.
-     *
-     * Example:
-     * waitForVisible(locator, 30);
-     *
-     * @param locator Element locator
-     * @param timeoutInSeconds Custom timeout
-     * @return Visible WebElement
-     */
     public WebElement waitForVisible(By locator,
                                      int timeoutInSeconds) {
         TestLogger.logWait(
@@ -188,18 +99,5 @@ public class WaitManager {
         return createWait().until(
                 ExpectedConditions.visibilityOfElementLocated(locator));
     } 
-    
-    // ------------------------------------------------------------------------
-    // FUTURE EXTENSION NOTE
-    // ------------------------------------------------------------------------
-    /*
-     * Future improvements:
-     * --------------------
-     * - FluentWait support (polling, ignore exceptions)
-     * - Custom retry mechanism
-     * - Smart wait (JS + network idle detection)
-     * - Config-based timeout per page/module
-     * - Element state caching for performance
-     */
     
 }

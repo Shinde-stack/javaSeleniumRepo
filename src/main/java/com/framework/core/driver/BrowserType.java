@@ -1,17 +1,14 @@
 package com.framework.core.driver;
 
 /**
- * Supported browsers.
+ * BrowserType
  *
- * Add browsers here when framework expands.
+ * Supported browser identifiers used during driver creation.
  *
- * Future:
- * -------
- * FIREFOX
- * SAFARI
- * REMOTE_CHROME
- * BROWSERSTACK
- * LAMBDATEST
+ * Flow:
+ *   properties file (browser=chrome) → ConfigLoader → EnvConfig → DriverManager → DriverFactory
+ *
+ * Extend this enum when adding FIREFOX, SAFARI, or remote/grid browsers.
  */
 public enum BrowserType {
 

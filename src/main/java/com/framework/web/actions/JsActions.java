@@ -10,18 +10,14 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import com.framework.core.logging.TestLogger;
 
 /**
- * ============================================================================
  * JsActions
- * ============================================================================
  *
- * Responsibility:
- * - JS-based fallback interactions
- * - Used only when normal Selenium fails
+ * JavaScript-based fallback interactions when standard Selenium actions fail.
  *
- * IMPORTANT:
- * - Should NOT be primary click strategy
- * - Used for stubborn UI elements only
- * ============================================================================
+ * Flow:
+ *   stubborn element → JsActions.click/scrollTo → executeScript on located element
+ *
+ * Not wired into ElementActions yet; use only as a secondary strategy, not the default path.
  */
 public class JsActions {
 
@@ -48,10 +44,9 @@ public class JsActions {
         js.executeScript("arguments[0].scrollIntoView(true);",
                 driver.findElement(by));
     }
+
     /**
-     * Waits for the entire HTML document to load completely.
-     * @param driver The active WebDriver instance
-     * @param timeoutInSeconds Maximum time to wait before throwing a timeout exception
+     * Standalone page-load wait; prefer WaitManager.waitForPageLoad() in the main flow.
      */
     public void waitForPageLoad(WebDriver driver, long timeoutInSeconds) {
     	

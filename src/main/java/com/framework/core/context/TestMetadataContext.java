@@ -3,8 +3,14 @@ package com.framework.core.context;
 import java.util.UUID;
 
 /**
- * Stores immutable execution metadata for a single test run.
- * Used to correlate logs across UI, API, and Database layers.
+ * TestMetadataContext
+ *
+ * Immutable and mutable metadata for correlating logs, screenshots, and reports per test run.
+ *
+ * Flow:
+ *   ExecutionContext created → correlationId assigned → (planned) listener sets testName/environment
+ *
+ * correlationId is generated once per context and intended for cross-layer tracing (UI, API, DB).
  */
 public class TestMetadataContext {
 
@@ -15,11 +21,6 @@ public class TestMetadataContext {
     private long threadId;
     private String executionId;
 
-    /**
-     * Initializes a new metadata context for a specific environment.
-     *
-     * @param environment The target execution environment (e.g., STG, PROD).
-     */
     public TestMetadataContext() {
         this.correlationId = UUID.randomUUID().toString();
         this.startTime = System.currentTimeMillis();

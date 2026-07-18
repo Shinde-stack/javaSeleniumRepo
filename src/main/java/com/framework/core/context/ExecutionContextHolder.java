@@ -2,6 +2,18 @@ package com.framework.core.context;
 
 import com.framework.core.logging.TestLogger;
 
+/**
+ * ExecutionContextHolder
+ *
+ * ThreadLocal registry for the active ExecutionContext on the current test thread.
+ *
+ * Flow:
+ *   ContextLifecycleManager.initializeContext() → setContext()
+ *   → BasePage / TestLogger / ScreenshotService → getContext()
+ *   → cleanupContext() → removeContext()
+ *
+ * Throws IllegalStateException if getContext() is called before initialization.
+ */
 public final class ExecutionContextHolder {
 
     private ExecutionContextHolder() {
@@ -12,7 +24,6 @@ public final class ExecutionContextHolder {
 
     public static void setContext(ExecutionContext context) {
 
-    	   // TEMP DEBUG LOG (REMOVE LATER)
         TestLogger.logStep("TEMP---ExecutionContextHolder.setContext");
 
         if (context == null) {
@@ -22,14 +33,7 @@ public final class ExecutionContextHolder {
         CONTEXT.set(context);
     }
 
-    /**
-     * SAFE ACCESS LAYER
-     *
-     * DO NOT validate here.
-     * Validation should happen in BaseTest or lifecycle manager.
-     */
     public static ExecutionContext getContext() {
-    	   // TEMP DEBUG LOG (REMOVE LATER)
     //    TestLogger.logStep("TEMP---ExecutionContextHolder.getContext");
 
         ExecutionContext context = CONTEXT.get();
@@ -44,7 +48,6 @@ public final class ExecutionContextHolder {
     }
 
     public static void removeContext() {
-    	   // TEMP DEBUG LOG (REMOVE LATER)
         TestLogger.logStep("TEMP---ExecutionContextHolder.removeContext");
 
         CONTEXT.remove();

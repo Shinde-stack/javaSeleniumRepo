@@ -14,17 +14,15 @@ import com.framework.web.pages.LoginPage;
 import com.framework.web.actions.WebActions;
 
 /**
- * ============================================================================
- * Class Name : LoginTest
- * ============================================================================
+ * LoginTest
  *
- * Purpose: -------- Validates login functionality using Page Object model.
+ * Sample web test validating login via the Page Object model.
  *
- * Flow: ----- BaseTest ↓ ExecutionContext initialized ↓ WebDriver created ↓
- * LoginPage used for actions
- * ============================================================================
+ * Flow:
+ *   @Listeners(TestListener) → onTestStart bootstraps context/driver/report
+ *   → LoginPage.open() + login() → Assert / AssertionEngine checks
+ *   → listener cleans up context and flushes report step on pass/fail
  */
-
 //Option 2: annotation (not recommended for enterprise scale)
 @Listeners(TestListener.class)
 public class LoginTest {
@@ -34,20 +32,22 @@ public class LoginTest {
 		TestLogger.logStep(
 				">>>>>>>>>>>>>>>>>>>LoginTest - verifyValidLogin>>>>>>>>>>>>>>>>>>>>>>>");
 
-		// Page initialization (driver comes from ExecutionContext internally)
+		// Step 1: page object resolves driver from ExecutionContext via BasePage
 		LoginPage loginPage = new LoginPage();
 
-//        // Step 1: open application
+		// Step 2: navigate to login URL and wait for page load
 		loginPage.open();
-		// Step 2: perform login action
+
+		// Step 3: execute login business flow
 		loginPage.login("testUser", "testPass");
 		TestLogger.logStep("login STEP => testUser / testPass");
 
-		// Step 3: validation (example placeholder)
+		// Step 4: placeholder validation — replace with real post-login check
 		boolean isLoggedIn = true; // replace with real assertion logic
 
 		Assert.assertTrue(isLoggedIn, "---------------Login failed - user not redirected to home page");
 		
+		// Step 5: exercise AssertionEngine hard/soft modes (demo only)
 		AssertionEngine assertionEngine = new AssertionEngine();
 
 		assertionEngine.assertTrue(false, "success msg-1", "failure msg -1", Severity.SOFT);

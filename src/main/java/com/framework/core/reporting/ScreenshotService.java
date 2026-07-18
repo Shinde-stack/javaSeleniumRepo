@@ -15,28 +15,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * ============================================================================
- * Class Name : ScreenshotService
- * ============================================================================
+ * ScreenshotService
  *
- * Purpose:
- * --------
- * Captures browser screenshots in a thread-safe manner
- * for failure analysis and reporting.
+ * Captures browser screenshots on failure using the active thread's WebDriver.
  *
- * Responsibilities:
- * -----------------
- * 1. Capture screenshot from WebDriver
- * 2. Store file using execution metadata
- * 3. Return file path for reporting attachment
- *
- * Design:
- * -------
- * - Uses ExecutionContext (thread-safe source of truth)
- * - Avoids static WebDriver references
- * - Generates unique file names per thread
- *
- * ============================================================================
+ * Flow:
+ *   TestListener.onTestFailure → capture(testName) → read driver from ExecutionContext
+ *   → save PNG under SCREENSHOT_DIR → return path for ReportManager.addScreenshot()
  */
 public final class ScreenshotService {
 
