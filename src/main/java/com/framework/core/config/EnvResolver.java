@@ -1,11 +1,8 @@
 package com.framework.core.config;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.framework.core.constants.ConfigConstants;
-import com.framework.core.excepions.FrameworkException;
-import com.framework.core.logging.TestLogger;
+import com.framework.core.enums.EnvironmentType;
+
 
 /**
  * EnvResolver
@@ -17,27 +14,33 @@ import com.framework.core.logging.TestLogger;
  */
 public class EnvResolver {
 
-	public static String resolve() {
-
-		TestLogger.logStep("temp ---EnvResolver.resolve");
+	public static EnvironmentType resolve() {
 
 		// Priority 1: JVM argument (-Denv=qa)
 		String env = System.getProperty("env");
 
 		// Priority 2: OS / CI environment variable
-		if (env == null || env.isBlank()) {
+		if (isBlank(env)) {
 			env = System.getenv("ENV");
 		}
 
 		// Priority 3: default fallback
-		if (ConfigConstants.isDefaultFallbackEnvExpected) {
-			if (env == null || env.isBlank()) {
-				env = ConfigConstants.default_fallback_env;
-			}
-		} else {
-			throw new FrameworkException("Enviornment NOT FOUND to the EnvResolver class.");
+		if (isBlank(env)) {
+
+			env = ConfigConstants.DEFAULT_FALLBACK_ENV;
+
 		}
 
-		return env.toLowerCase();
+		return EnvironmentType.from(env);
+	}
+
+	private static boolean isBlank(String text) {
+
+		if (text == null || text.isBlank()) {
+			return true;
+		} else {
+			return false;
+		}
+
 	}
 }

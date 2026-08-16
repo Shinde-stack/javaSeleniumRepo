@@ -17,4 +17,7 @@ public class FrameworkException extends RuntimeException {
         super(message);
     }
 	
+	public FrameworkException(String message, Throwable exception) {
+        super(message,exception);
+    }
 }

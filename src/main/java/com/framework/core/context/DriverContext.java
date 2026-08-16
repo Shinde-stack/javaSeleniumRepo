@@ -2,36 +2,37 @@ package com.framework.core.context;
 
 import org.openqa.selenium.WebDriver;
 
+import com.framework.core.excepions.FrameworkException;
+
 /**
  * DriverContext
  *
  * Holds the WebDriver instance for one test execution thread.
  *
- * Flow:
- *   DriverManager.initializeDriver() → setDriver() → pages/actions read via ExecutionContext → quitDriver() on cleanup
+ * Flow: DriverManager.initializeDriver() → setDriver() → pages/actions read via
+ * ExecutionContext → quitDriver() on cleanup
  *
  * One DriverContext per ExecutionContext; never shared across threads.
  */
 public class DriverContext {
 
-    private WebDriver driver;
+	private WebDriver driver;
 
-    public WebDriver getDriver() {
-        return driver;
-    }
+	public WebDriver getDriver() {
 
-    public void setDriver(WebDriver driver) {
-        this.driver = driver;
-    }
+		if (driver == null) {
 
-    /**
-     * Closes the browser session and clears the reference.
-     */
-    public void quitDriver() {
+			throw new FrameworkException("WebDriver has not been initialized.");
+		}
 
-        if (driver != null) {
-            driver.quit();
-            driver = null;
-        }
-    }
+		return driver;
+	}
+
+	public void setDriver(WebDriver driver) {
+		this.driver = driver;
+	}
+
+	public boolean hasDriver() {
+		return driver != null;
+	}
 }

@@ -16,17 +16,27 @@ import com.framework.core.reporting.ReportManager;
 import com.framework.core.reporting.ScreenshotService;
 
 /**
- * TestListener
+ * ============================================================================
+ * Class Name : TestListener
+ * ============================================================================
  *
- * TestNG hook that ties reporting and framework lifecycle to test execution.
+ * Coordinates the framework lifecycle with TestNG execution.
  *
- * Flow:
- *   onStart (suite)  → init ExtentReports
- *   onTestStart        → create ExtentTest → lifecycle.start() (context + driver + base URL)
- *   onTestSuccess/Fail/Skip → update report → screenshot on fail → lifecycle.cleanupContext()
- *   onFinish (suite)   → flush report
+ * Responsibilities
+ * ----------------
+ * - Initialize reporting.
+ * - Start framework lifecycle.
+ * - Populate test metadata.
+ * - Update execution report.
+ * - Capture screenshots on failures.
+ * - Release framework resources.
+ *
+ * This class acts only as an orchestration layer.
+ *
+ * ============================================================================
  */
-public class TestListener implements ITestListener, ISuiteListener {
+public class TestListener
+        implements ITestListener, ISuiteListener {
 
     private static final Logger log =
             LoggerFactory.getLogger(TestListener.class);
@@ -37,13 +47,24 @@ public class TestListener implements ITestListener, ISuiteListener {
     @Override
     public void onStart(ISuite suite) {
 
-        log.info("Suite Started");
+        log.info("Suite Started : {}", suite.getName());
 
-        String reportPath =ReportConstants.REPORT_DIR + ReportConstants.REPORT_FILE_NAME;
+        /*
+         * Temporary.
+         *
+         * Will be replaced by:
+         *
+         * ExecutionWorkspace
+         *      -> ExecutionDirectories
+         *      -> Report File
+         */
+        String reportPath =
+                "target/AutomationExecutionReport/"
+                        + ReportConstants.REPORT_FILE_NAME;
 
         ReportManager.initReport(reportPath);
     }
-    
+
     @Override
     public void onTestStart(ITestResult result) {
 
@@ -51,69 +72,80 @@ public class TestListener implements ITestListener, ISuiteListener {
                 result.getMethod().getMethodName();
 
         log.info("Starting Test : {}", testName);
-        
 
-        // Step 1: bind ExtentTest to current thread before framework startup logs
-        ExtentTest test = ReportManager.createTest(testName);
+        ExtentTest extentTest =
+                ReportManager.createTest(testName);
 
-        ReportManager.setTest(test);
+        ReportManager.setTest(extentTest);
 
-        // Step 2: bootstrap context, driver, and application URL
-//        ExecutionContext context =
-//                lifecycle.initializeContext();
-//
-//        lifecycle.initDriver(context);
-//
-//        lifecycle.launchApplication(context);
-        
-        lifecycle.start();
+        ExecutionContext context =
+                lifecycle.start();
 
-        TestLogger.logStep("Framework initialization completed");
+        context.getMetadataContext()
+                .setTestName(testName);
+
+        log.info("Framework initialized successfully.");
     }
 
     @Override
     public void onTestSuccess(ITestResult result) {
 
-        TestLogger.logStep("onTestSuccess-Test Passed");
+        try {
 
-        ReportManager.pass(result.getName());
-        
-        lifecycle.cleanupContext();
-        ReportManager.removeTest();
+            TestLogger.logStep("Test Passed");
+
+            ReportManager.pass(result.getName());
+
+        } finally {
+
+            lifecycle.destroyContext();
+
+            ReportManager.removeTest();
+        }
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
 
-        TestLogger.logFailure(
-                "onTestFailure -Test Failed",
-                result.getThrowable());
+        try {
 
-        ReportManager.fail(result.getThrowable());
+            TestLogger.logFailure(
+                    "Test Failed",
+                    result.getThrowable());
 
-        TestLogger.logWarning(result.getTestName());
-      String screenShotPath =  ScreenshotService.capture(result.getMethod().getMethodName());// ISSUE - name is always NULL
-        ReportManager.addScreenshot(screenShotPath);
-        
-        lifecycle.cleanupContext();
-        ReportManager.removeTest();
+            ReportManager.fail(result.getThrowable());
+
+            ScreenshotService.capture("Failure");
+
+        } finally {
+
+            lifecycle.destroyContext();
+
+            ReportManager.removeTest();
+        }
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
 
-        TestLogger.logStep("onTestSkipped-Test Skipped");
+        try {
 
-        ReportManager.info(result.getName());
-        
-        lifecycle.cleanupContext();
-        ReportManager.removeTest();
+            TestLogger.logWarning("Test Skipped");
+
+            ReportManager.warn(result.getName());
+
+        } finally {
+
+            lifecycle.destroyContext();
+
+            ReportManager.removeTest();
+        }
     }
 
     @Override
     public void onFinish(ISuite suite) {
 
-        log.info("onFinish-Suite Finished");
+        log.info("Suite Finished : {}", suite.getName());
 
         ReportManager.flush();
     }

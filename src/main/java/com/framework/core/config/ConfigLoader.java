@@ -1,14 +1,17 @@
 package com.framework.core.config;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 import com.framework.core.constants.ConfigConstants;
 import com.framework.core.driver.BrowserType;
-import com.framework.core.logging.TestLogger;
-import com.framework.core.reporting.ReportManager;
+import com.framework.core.enums.EnvironmentType;
+import com.framework.core.excepions.FrameworkException;
 
 /**
  * ConfigLoader
@@ -36,23 +39,23 @@ public class ConfigLoader {
 
 	private Properties loadProperties() {
 
-		String env = EnvResolver.resolve();
+		EnvironmentType env = EnvResolver.resolve();
 
-		String file = ConfigConstants.CONFIG_DIRECTORY + env + ConfigConstants.CONFIG_EXTENSION;
-		TestLogger.logStep("temp---config file path ->" + file);
+		String file = ConfigConstants.CONFIG_DIRECTORY + env.getConfigFileName();
 
 		Properties props = new Properties();
 
 		try (InputStream input = getClass().getClassLoader().getResourceAsStream(file)) {
 
 			if (input == null) {
-				throw new RuntimeException("Configuration file not found: " + file);
+				throw new FrameworkException("Configuration file not found: " + file);
 			}
 			props.load(input);
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to load configuration file: " + file, e);
-		}
+		} catch (IOException e) {
 
+			throw new FrameworkException(
+					"Failed to read configuration file: " + file + " Exception msg. is :" + e.getMessage());
+		}
 		return props;
 	}
 
@@ -70,44 +73,28 @@ public class ConfigLoader {
 		}
 
 		if (!missingProperties.isEmpty()) {
-
-			String message = "CONFIG VALIDATION FAILED. Missing properties: " + String.join(", ", missingProperties);
-
-			TestLogger.logFailure(message, new RuntimeException(message));
-
-			try {
-				ReportManager.fail(message);
-			} catch (Exception ignored) {
-			}
-
-			throw new RuntimeException(message);
-		}
-
-		try {
-			TestLogger.logStep("CONFIG VALIDATION PASSED");
-		} catch (Exception ignored) {
+			String message = "Config validation failed. Missing properties: " + String.join(", ", missingProperties);
+			throw new FrameworkException(message);
 		}
 	}
 
 	private EnvConfig buildConfig(Properties properties) {
 
-		TestLogger.logStep("buildConfig");
+		BrowserType browserType = BrowserType.from(properties.getProperty("browser"));
+		String baseUrl = getBaseUrl(properties, "baseUrl");
 
-		BrowserType browserType = BrowserType.valueOf(properties.getProperty("browser").trim().toUpperCase());
+		// boolean values
+		boolean headless = getBoolean(properties, "headless", false);
 
-		boolean headless = Boolean.parseBoolean(properties.getProperty("headless"));
+		boolean logToConsole = getBoolean(properties, "log.console", true);
 
-		String baseUrl = properties.getProperty("baseUrl").trim();
+		boolean logToReport = getBoolean(properties, "log.report", true);
 
-		boolean logToConsole = Boolean.parseBoolean(properties.getProperty("log.console", "true"));
+		boolean logElementActions = getBoolean(properties, "log.element.actions", true);
 
-		boolean logToReport = Boolean.parseBoolean(properties.getProperty("log.report", "true"));
+		boolean logWaitActions = getBoolean(properties, "log.wait.actions", true);
 
-		boolean logElementActions = Boolean.parseBoolean(properties.getProperty("log.element.actions", "true"));
-
-		boolean logWaitActions = Boolean.parseBoolean(properties.getProperty("log.wait.actions", "true"));
-
-		boolean screenshotOnFailure = Boolean.parseBoolean(properties.getProperty("screenshot.on.failure", "true"));
+		boolean screenshotOnFailure = getBoolean(properties, "screenshot.on.failure", true);
 
 		EnvConfig config = new EnvConfig();
 
@@ -119,15 +106,70 @@ public class ConfigLoader {
 		config.setLogToReport(logToReport);
 		config.setLogElementActions(logElementActions);
 		config.setLogWaitActions(logWaitActions);
-
 		config.setScreenshotOnFailure(screenshotOnFailure);
-
-		TestLogger.logStep("config ----->" + config);
 
 		return config;
 	}
 
 	private boolean isBlank(String value) {
 		return value == null || value.trim().isEmpty();
+	}
+
+	private boolean getBoolean(Properties properties, String key, boolean defaultValue) {
+
+		String value = properties.getProperty(key);
+
+		if (value == null) {
+			return defaultValue;
+		}
+
+		value = value.trim();
+
+		if ("true".equalsIgnoreCase(value)) {
+			return true;
+		}
+
+		if ("false".equalsIgnoreCase(value)) {
+			return false;
+		}
+
+		throw new FrameworkException(
+				"Invalid boolean value for property '" + key + "': '" + value + "'. Expected 'true' or 'false'.");
+	}
+
+	private String getBaseUrl(Properties properties, String key) {
+
+		String value = properties.getProperty(key);
+
+		if (isBlank(value)) {
+			throw new FrameworkException("Configuration property '" + key + "' cannot be null or blank.");
+		}
+
+		value = value.trim();
+
+		try {
+
+			URI uri = new URI(value);
+
+			String scheme = uri.getScheme();
+
+			if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+
+				throw new FrameworkException(
+						"Invalid URL scheme for property '" + key + "'. Only HTTP and HTTPS are supported.");
+			}
+
+			if (uri.getHost() == null || uri.getHost().isBlank()) {
+
+				throw new FrameworkException("Invalid URL for property '" + key + "'. Host name is missing.");
+			}
+
+			return value;
+
+		} catch (URISyntaxException e) {
+
+			throw new FrameworkException("Invalid URL syntax for property '" + key + "': " + value
+					+ " Exception msg. is :" + e.getMessage());
+		}
 	}
 }

@@ -1,138 +1,151 @@
 package com.framework.web.actions;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
+import com.framework.core.excepions.ElementActionException;
 import com.framework.core.logging.TestLogger;
-import com.framework.web.exceptions.ElementActionException;
 import com.framework.web.waits.WaitManager;
 
 /**
  * ElementActions
  *
- * Primary UI interaction layer for page objects. Wraps waits, logging, and exception translation.
+ * Primary UI interaction layer for page objects. Wraps waits, logging, and
+ * exception translation.
  *
- * Flow:
- *   page method → ElementActions.click/sendKeys/getText → WaitManager stabilizes element
- *   → Selenium action → log success, or catch and throw ElementActionException
+ * Flow: page method → ElementActions.click/sendKeys/getText → WaitManager
+ * stabilizes element → Selenium action → log success, or catch and throw
+ * ElementActionException
  *
  * Page classes must not call WebDriver directly; use this class instead.
  */
+
 public class ElementActions {
 
-    private final WebDriver driver;
-    private final WaitManager waitManager;
+	private final WebDriver driver;
+	private final WaitManager waitManager;
 
-    public ElementActions(WebDriver driver, WaitManager waitManager) {
-        this.driver = driver;
-        this.waitManager = waitManager;
-    }
+	private final JsActions jsActions;
 
-    public void click(By locator, String elementName) {
+	public ElementActions(WebDriver driver, WaitManager waitManager) {
+		this.driver = driver;
+		this.waitManager = waitManager;
+		this.jsActions = new JsActions(driver, waitManager);
 
-        try {
-            TestLogger.logAction("Clicking on: " + elementName);
+	}
 
-            WebElement element = waitManager.waitForClickable(locator);
+	public void click(By locator, String elementName) {
 
-            element.click();
+		try {
+			TestLogger.logAction("Clicking on: " + elementName);
 
-            TestLogger.logStep("Clicked successfully: " + elementName);
+			WebElement element = waitManager.waitForClickable(locator, elementName);
 
-        } catch (Exception e) {
+			element.click();
 
-            TestLogger.logFailure("Click failed: " + elementName, e);
+			TestLogger.logStep("Clicked successfully: " + elementName);
 
-            throw new ElementActionException(
-                    "Failed to click element: " + elementName, e);
-        }
-    }
+		} catch (Exception e) {
 
-    public void sendKeys(By locator, String value, String elementName) {
+			TestLogger.logFailure("Click failed: " + elementName, e);
 
-        try {
-            TestLogger.logAction("Entering value in: " + elementName);
+			throw new ElementActionException("Failed to click element: " + elementName, e);
+		}
+	}
+	
+	public void click(WebElement locator, String elementName) {
 
-            WebElement element = waitManager.waitForVisible(locator);
+		try {
+			TestLogger.logAction("Clicking on: " + elementName);
 
-            element.clear();
-            element.sendKeys(value);
+			WebElement element = waitManager.waitForClickable(locator, elementName);
 
-            TestLogger.logStep("Value entered in: " + elementName);
+			element.click();
 
-        } catch (Exception e) {
+			TestLogger.logStep("Clicked successfully: " + elementName);
 
-            TestLogger.logFailure("SendKeys failed: " + elementName, e);
+		} catch (Exception e) {
 
-            throw new ElementActionException(
-                    "Failed to enter value in: " + elementName, e);
-        }
-    }
+			TestLogger.logFailure("Click failed: " + elementName, e);
 
-    public String getText(By locator, String elementName) {
+			throw new ElementActionException("Failed to click element: " + elementName, e);
+		}
+	}
 
-        try {
-            TestLogger.logAction("Getting text from: " + elementName);
+	public void sendKeys(By locator, String value, String elementName) {
 
-            WebElement element = waitManager.waitForVisible(locator);
+		try {
+			TestLogger.logAction("Entering value in: " + elementName);
 
-            String text = element.getText();
+			WebElement element = waitManager.waitForVisible(locator, elementName);
 
-            TestLogger.logStep("Text retrieved from: " + elementName);
+			element.clear();
+			element.sendKeys(value);
 
-            return text;
+			TestLogger.logStep("Value entered in: " + elementName);
 
-        } catch (Exception e) {
+		} catch (Exception e) {
 
-            TestLogger.logFailure("GetText failed: " + elementName, e);
+			TestLogger.logFailure("SendKeys failed: " + elementName, e);
 
-            throw new ElementActionException(
-                    "Failed to get text from: " + elementName, e);
-        }
-    }
+			throw new ElementActionException("Failed to enter value in: " + elementName, e);
+		}
+	}
 
-    public void scrollIntoView(By locator, String elementName) {
+	public String getText(By locator, String elementName) {
 
-        try {
-            TestLogger.logAction("Scrolling to: " + elementName);
+		try {
+			TestLogger.logAction("Getting text from: " + elementName);
 
-            WebElement element = waitManager.waitForPresence(locator);
+			WebElement element = waitManager.waitForVisible(locator, elementName);
 
-            ((JavascriptExecutor) driver)
-                    .executeScript("arguments[0].scrollIntoView(true);", element);
+			String text = element.getText();
 
-            TestLogger.logStep("Scrolled to: " + elementName);
+			TestLogger.logStep("Text retrieved from: " + elementName);
 
-        } catch (Exception e) {
+			return text;
 
-            TestLogger.logFailure("Scroll failed: " + elementName, e);
+		} catch (Exception e) {
 
-            throw new ElementActionException(
-                    "Failed to scroll to: " + elementName, e);
-        }
-    }
+			TestLogger.logFailure("GetText failed: " + elementName, e);
 
-    public boolean isDisplayed(By locator, String elementName) {
+			throw new ElementActionException("Failed to get text from: " + elementName, e);
+		}
+	}
 
-        try {
-            TestLogger.logAction("Checking visibility: " + elementName);
+	public boolean isDisplayed(By locator, String elementName) {
 
-            WebElement element = waitManager.waitForPresence(locator);
+		try {
+			TestLogger.logAction("Checking visibility: " + elementName);
 
-            boolean displayed = element.isDisplayed();
+			WebElement element = waitManager.waitForPresence(locator, elementName);
 
-            TestLogger.logStep("Visibility checked: " + elementName);
+			boolean displayed = element.isDisplayed();
 
-            return displayed;
+			TestLogger.logStep("Visibility checked: " + elementName);
 
-        } catch (Exception e) {
+			return displayed;
 
-            TestLogger.logFailure("Visibility check failed: " + elementName, e);
+		} catch (Exception e) {
 
-            return false;
-        }
-    }
+			TestLogger.logFailure("Visibility check failed: " + elementName, e);
 
+			return false;
+		}
+	}
+
+	// js actions
+
+	public void scrollIntoView(By locator, String elementName) {
+
+		jsActions.scrollTo(locator, elementName);
+
+	}
+
+	public void JsClick(By locator, String elementName) {
+
+		jsActions.jsClick(locator, elementName);
+
+	}
 }

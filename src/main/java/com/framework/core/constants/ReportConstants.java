@@ -1,35 +1,44 @@
 package com.framework.core.constants;
 
-import java.io.File;
-
 /**
- * ReportConstants
+ * ============================================================================
+ * Class Name : ReportConstants
+ * ============================================================================
  *
- * File-system paths and names for ExtentReports output and screenshots.
+ * Defines report specific constants.
  *
- * Flow:
- *   TestListener.onStart → ReportManager.initReport(REPORT_DIR + REPORT_FILE_NAME)
- *   onTestFailure → ScreenshotService writes to SCREENSHOT_DIR → ReportManager attaches path
+ * Responsibilities
+ * ----------------
+ * - Report file names.
+ * - Report titles.
+ * - Report metadata.
+ *
+ * Directory locations belong to ExecutionConstants.
+ *
+ * ============================================================================
  */
 public final class ReportConstants {
 
-    private ReportConstants() {}
+    private ReportConstants() {
+        throw new UnsupportedOperationException(
+                "Utility class should not be instantiated.");
+    }
 
-    public static final String TARGET_DIR =
-            "target";
-
-    public static final String REPORT_DIR =
-            TARGET_DIR + File.separator + "reports1"+ File.separator;
-
-    public static final String SCREENSHOT_DIR =
-            TARGET_DIR + File.separator + "screenshots1"+ File.separator;
-
-    public static final String LOG_DIR =
-            TARGET_DIR + File.separator + "logs1";
-
+    /**
+     * Default Extent report filename.
+     */
     public static final String REPORT_FILE_NAME =
-            "ExtentReport.html";
+            "AutomationExecutionReport.html";
 
-    public static final String SCREENSHOT_EXTENSION =
-            ".png";
+    /**
+     * Report display name.
+     */
+    public static final String REPORT_NAME =
+            "Automation Execution Report";
+
+    /**
+     * Browser title.
+     */
+    public static final String REPORT_TITLE =
+            "Automation Results";
 }

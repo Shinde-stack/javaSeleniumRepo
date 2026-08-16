@@ -3,6 +3,8 @@ package com.framework.core.driver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 
+import com.framework.core.config.EnvConfig;
+
 /**
  * DriverOptionsBuilder
  *
@@ -18,7 +20,7 @@ public final class DriverOptionsBuilder {
     private DriverOptionsBuilder() {
     }
 
-    public static ChromeOptions buildChromeOptions(boolean headless) {
+    public static ChromeOptions buildChromeOptions(EnvConfig config) {
 
         ChromeOptions options = new ChromeOptions();
 
@@ -27,20 +29,21 @@ public final class DriverOptionsBuilder {
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--no-sandbox");
 
-        if (headless) {
+        
+        if (config.isHeadless()) {
             options.addArguments("--headless=new");
         }
 
         return options;
     }
 
-    public static EdgeOptions buildEdgeOptions(boolean headless) {
+    public static EdgeOptions buildEdgeOptions(EnvConfig config) {
 
         EdgeOptions options = new EdgeOptions();
 
         options.addArguments("--start-maximized");
 
-        if (headless) {
+        if (config.isHeadless()) {
             options.addArguments("--headless=new");
         }
 

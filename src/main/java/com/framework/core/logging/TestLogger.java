@@ -144,7 +144,7 @@ public final class TestLogger {
         try {
 
             ExecutionContext context =
-                    ExecutionContextHolder.getContext();
+                    ExecutionContextHolder.get();
 
             return context != null
                     ? context.getConfig()

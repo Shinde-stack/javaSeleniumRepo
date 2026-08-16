@@ -4,6 +4,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 
+import com.framework.core.config.EnvConfig;
 import com.framework.core.excepions.DriverException;
 
 /**
@@ -18,26 +19,29 @@ import com.framework.core.excepions.DriverException;
  */
 public class DriverFactory {
 
-	public static WebDriver createDriver(BrowserType browserType, boolean headless) {
+	public  WebDriver createDriver(EnvConfig config) {
+
+		BrowserType browserType =config.getBrowserType();
 
 		try {
-
+			
 			switch (browserType) {
 
 			case CHROME:
-				return new ChromeDriver(DriverOptionsBuilder.buildChromeOptions(headless));
+				return new ChromeDriver(DriverOptionsBuilder.buildChromeOptions(config));
 
 			case EDGE:
-				return new EdgeDriver(DriverOptionsBuilder.buildEdgeOptions(headless));
+				return new EdgeDriver(DriverOptionsBuilder.buildEdgeOptions(config));
 
 			default:
 				throw new IllegalArgumentException("Unsupported browser: " + browserType);
 			}
 
-		} catch (Exception ex) {
+		} catch (Exception e) {
 
-			throw new DriverException("Failed to create browser: " + browserType + " - " + ex);
-		}
+			throw new DriverException(
+				    "Failed to create browser: "
+				    + browserType +"Exception is -"+e);		}
 	}
 
 }

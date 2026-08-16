@@ -4,143 +4,217 @@ import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.MediaEntityBuilder;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import com.framework.core.logging.TestLogger;
+import com.framework.core.constants.ReportConstants;
 
 /**
- * ReportManager
+ * ============================================================================
+ * Class Name : ReportManager
+ * ============================================================================
  *
- * Thread-safe wrapper around ExtentReports for HTML test reporting.
+ * Thread-safe wrapper around ExtentReports.
  *
- * Flow:
- *   suite onStart     → initReport(path)
- *   test onStart      → createTest(name) → setTest() on ThreadLocal
- *   during test       → info/pass/fail/warn via TestLogger or direct calls
- *   test onFailure    → addScreenshot(path)
- *   test end          → removeTest()
- *   suite onFinish    → flush()
+ * Responsibilities
+ * ----------------
+ * - Initialize ExtentReports once per execution.
+ * - Maintain one ExtentTest per execution thread.
+ * - Provide framework-wide reporting APIs.
+ * - Flush the report after execution.
+ *
+ * This class intentionally contains no:
+ * - Selenium logic
+ * - TestNG logic
+ * - Screenshot capture logic
+ * - Execution directory logic
+ *
+ * Flow
+ * ----
+ *
+ * TestListener
+ *      │
+ *      ▼
+ * initReport(reportPath)
+ *      │
+ *      ▼
+ * createTest()
+ *      │
+ *      ▼
+ * setTest()
+ *      │
+ *      ▼
+ * pass()/fail()/info()/warn()
+ *      │
+ *      ▼
+ * flush()
+ *
+ * ============================================================================
  */
 public final class ReportManager {
 
-	private static ExtentReports extentReports;
+    private static ExtentReports extentReports;
 
-	private static final ThreadLocal<ExtentTest> extentTest_thread = new ThreadLocal<>();
+    /**
+     * One ExtentTest per execution thread.
+     */
+    private static final ThreadLocal<ExtentTest> CURRENT_TEST =
+            new ThreadLocal<>();
 
-	private ReportManager() {
-	}
+    private ReportManager() {
+        throw new UnsupportedOperationException(
+                "Utility class should not be instantiated.");
+    }
 
-	public static synchronized void initReport(String reportPath) {
+    /**
+     * Initializes ExtentReports.
+     *
+     * Safe to invoke multiple times.
+     */
+    public static synchronized void initReport(String reportPath) {
 
-		if (extentReports != null) {
-			return;
-		}
+        if (extentReports != null) {
+            return;
+        }
 
-		ExtentSparkReporter spark = new ExtentSparkReporter(reportPath);
+        ExtentSparkReporter sparkReporter =
+                new ExtentSparkReporter(reportPath);
 
-		spark.config().setReportName("Automation Execution Report");
+        sparkReporter.config()
+                .setReportName(
+                        ReportConstants.REPORT_NAME);
 
-		spark.config().setDocumentTitle("Automation Results");
+        sparkReporter.config()
+                .setDocumentTitle(
+                        ReportConstants.REPORT_TITLE);
 
-		extentReports = new ExtentReports();
-		extentReports.attachReporter(spark);
-	}
+        extentReports = new ExtentReports();
+        extentReports.attachReporter(sparkReporter);
+    }
 
-	public static ExtentTest createTest(String testName) {
+    /**
+     * Creates a new ExtentTest.
+     */
+    public static ExtentTest createTest(String testName) {
 
-		if (extentReports == null) {
-			throw new IllegalStateException("ExtentReports not initialized. " + "Call initReport() first.");
-		}
+        if (extentReports == null) {
+            throw new IllegalStateException(
+                    "ExtentReports has not been initialized.");
+        }
 
-		return extentReports.createTest(testName);
-	}
+        return extentReports.createTest(testName);
+    }
 
-	public static void setTest(ExtentTest test) {
+    /**
+     * Associates the supplied ExtentTest with the current thread.
+     */
+    public static void setTest(ExtentTest test) {
 
-		if (test == null) {
-			throw new IllegalArgumentException("ExtentTest cannot be null. 'createTest' need to be called before seatTest method");
-		}
+        if (test == null) {
+            throw new IllegalArgumentException(
+                    "ExtentTest cannot be null.");
+        }
 
-		extentTest_thread.set(test);
-	}
+        CURRENT_TEST.set(test);
+    }
 
-	public static ExtentTest getTest() {
+    /**
+     * Returns the current thread's ExtentTest.
+     */
+    public static ExtentTest getTest() {
 
-		ExtentTest test = extentTest_thread.get();
+        ExtentTest test =
+                CURRENT_TEST.get();
 
-		if (test == null) {
-			throw new IllegalStateException("ExtentTest not initialized " + "for current thread.");
-		}
+        if (test == null) {
+            throw new IllegalStateException(
+                    "ExtentTest not initialized for current thread.");
+        }
 
-		return test;
-	}
+        return test;
+    }
 
-	public static void info(String message) {
-		getTest().info(message);
-	}
+    public static void info(String message) {
+        getTest().info(message);
+    }
 
-	public static void pass(String message) {
-		getTest().pass(message);
-	}
+    public static void pass(String message) {
+        getTest().pass(message);
+    }
 
-	public static void fail(String message) {
-		getTest().fail(message);
-	}
+    public static void warn(String message) {
+        getTest().warning(message);
+    }
 
-	public static void fail(Throwable throwable) {
-		getTest().fail(throwable);
-	}
-	
-	public static void warn (String message) {
-		getTest().warning(message);
-	}
+    public static void fail(String message) {
+        getTest().fail(message);
+    }
 
-	public static void addScreenshot(String screenshotPath) {
- 		TestLogger.logStep("Report manager class - addScreenshot method");
+    public static void fail(Throwable throwable) {
+        getTest().fail(throwable);
+    }
 
-		if (screenshotPath == null || screenshotPath.isBlank()) {
-			return;
-		}
+    /**
+     * Attaches a screenshot to the current test.
+     */
+    public static void addScreenshot(String screenshotPath) {
 
-		try {
+        if (screenshotPath == null || screenshotPath.isBlank()) {
+            return;
+        }
 
-			getTest().addScreenCaptureFromPath(screenshotPath);
+        try {
 
-		} catch (Exception e) {
+            getTest().addScreenCaptureFromPath(screenshotPath);
 
-			getTest().warning("Failed to attach screenshot: " + e.getMessage());
-		}
-	}
+        } catch (Exception ex) {
 
-	public static void failWithScreenshot(String message, String screenshotPath) {
- 		TestLogger.logStep("Report manager class - failWithScreenshot method");
+            getTest().warning(
+                    "Unable to attach screenshot : "
+                            + ex.getMessage());
+        }
+    }
 
-		getTest().fail(message);
+    /**
+     * Marks the test as failed and attaches a screenshot.
+     */
+    public static void failWithScreenshot(
+            String message,
+            String screenshotPath) {
 
-		if (screenshotPath == null || screenshotPath.isBlank()) {
-			return;
-		}
+        getTest().fail(message);
 
-		try {
+        if (screenshotPath == null || screenshotPath.isBlank()) {
+            return;
+        }
 
-			getTest().fail("Screenshot", MediaEntityBuilder.createScreenCaptureFromPath(screenshotPath).build());
+        try {
 
-		} catch (Exception e) {
+            getTest().fail(
+                    "Screenshot",
+                    MediaEntityBuilder
+                            .createScreenCaptureFromPath(screenshotPath)
+                            .build());
 
-			getTest().warning("Failed to attach screenshot: " + e.getMessage());
-		}
-	}
+        } catch (Exception ex) {
 
-	public static void removeTest() {
- 		TestLogger.logStep("Report manager class - removeTest method");
+            getTest().warning(
+                    "Unable to attach screenshot : "
+                            + ex.getMessage());
+        }
+    }
 
-		extentTest_thread.remove();
-	}
+    /**
+     * Removes the ExtentTest associated with the current thread.
+     */
+    public static void removeTest() {
+        CURRENT_TEST.remove();
+    }
 
-	public static void flush() {
+    /**
+     * Writes the report to disk.
+     */
+    public static synchronized void flush() {
 
- 		TestLogger.logStep("Report manager class - flush method");
-
-		if (extentReports != null) {
-			extentReports.flush();
-		}
-	}
+        if (extentReports != null) {
+            extentReports.flush();
+        }
+    }
 }

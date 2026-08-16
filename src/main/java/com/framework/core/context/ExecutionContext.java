@@ -1,43 +1,70 @@
 package com.framework.core.context;
 
 import com.framework.core.config.EnvConfig;
-import com.framework.core.logging.TestLogger;
+import com.framework.core.execution.ExecutionWorkspace;
 
 /**
- * ExecutionContext
+ * ============================================================================
+ * Class Name : ExecutionContext
+ * ============================================================================
  *
- * Per-thread data container for one test run. Holds driver, config, metadata, and lifecycle state.
+ * Represents all runtime state for a single test execution.
  *
- * Flow:
- *   ContextLifecycleManager.initializeContext() → populate config/state → bind via ExecutionContextHolder
- *   → pages and services read from holder → cleanup destroys state
+ * Responsibilities
+ * ----------------
+ * - Hold DriverContext.
+ * - Hold TestMetadataContext.
+ * - Hold framework configuration.
+ * - Hold ExecutionWorkspace.
+ * - Maintain execution lifecycle state.
  *
- * Pure data holder: no driver creation, waits, assertions, or business logic.
+ * This class is a pure state container.
+ *
+ * One ExecutionContext exists per executing test thread.
+ *
+ * ============================================================================
  */
 public class ExecutionContext {
 
+    /**
+     * Current lifecycle state.
+     */
     private ContextState state;
 
+    /**
+     * Driver state for this execution.
+     */
     private final DriverContext driverContext;
 
-//    private final ApiContext apiContext;
-
-//    private final DbContext dbContext;
-
+    /**
+     * Test metadata.
+     */
     private final TestMetadataContext metadataContext;
 
+    /**
+     * Framework configuration.
+     */
     private EnvConfig config;
 
-    public ExecutionContext() {
+    /**
+     * Shared execution workspace.
+     *
+     * Every test executed within the same suite references the same workspace.
+     */
+    private final ExecutionWorkspace executionWorkspace;
+
+    public ExecutionContext(
+            ExecutionWorkspace executionWorkspace) {
+
+        if (executionWorkspace == null) {
+            throw new IllegalArgumentException(
+                    "ExecutionWorkspace cannot be null.");
+        }
 
         this.state = ContextState.CREATED;
-
         this.driverContext = new DriverContext();
-//        this.apiContext = new ApiContext();
-//        this.dbContext = new DbContext();
         this.metadataContext = new TestMetadataContext();
-
-        TestLogger.logStep("temp --- ExecutionContext ,,, CONSTRUCTOR ,,, created with default state: CREATED");
+        this.executionWorkspace = executionWorkspace;
     }
 
     public ContextState getState() {
@@ -45,23 +72,12 @@ public class ExecutionContext {
     }
 
     public void setState(ContextState state) {
-
-        TestLogger.logStep("temp --- ExecutionContext state changed -> " + state);
-
         this.state = state;
     }
 
     public DriverContext getDriverContext() {
         return driverContext;
     }
-
-//    public ApiContext getApiContext() {
-//        return apiContext;
-//    }
-//
-//    public DbContext getDbContext() {
-//        return dbContext;
-//    }
 
     public TestMetadataContext getMetadataContext() {
         return metadataContext;
@@ -72,37 +88,25 @@ public class ExecutionContext {
     }
 
     public void setConfig(EnvConfig config) {
-
-        TestLogger.logStep("temp --- ExecutionContext config set");
-
         this.config = config;
     }
 
-    public boolean hasDriver() {
-        return driverContext != null && driverContext.getDriver() != null;
+    public ExecutionWorkspace getExecutionWorkspace() {
+        return executionWorkspace;
     }
 
-//    public boolean hasDatabase() {
-//        return dbContext != null && dbContext.getConnection() != null;
-//    }
-//
-//    public boolean hasApiSession() {
-//        return apiContext != null && apiContext.getAccessToken() != null;
-//    }
+    public boolean hasDriver() {
+        return driverContext.getDriver() != null;
+    }
 
     @Override
     public String toString() {
-    	
-    	String info = "ExecutionContext{" +
+
+        return "ExecutionContext{" +
                 "state=" + state +
+                ", executionId=" + executionWorkspace.getExecutionId() +
                 ", testName=" + metadataContext.getTestName() +
                 ", correlationId=" + metadataContext.getCorrelationId() +
                 '}';
-    	
-        TestLogger.logStep("temp --- execution context info =>"+info);
-        TestLogger.logStep("temp --- metadataContext =>"+metadataContext);
-
-    	
-        return info;
     }
 }

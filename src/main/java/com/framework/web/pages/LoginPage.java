@@ -22,13 +22,14 @@ public class LoginPage extends BasePage {
     private By passwordInput = By.id("password");
     private By loginButton = By.xpath("//button[contains(text(),'Login')]");
 
-    private final By errorMessage   = By.id("errorMsg");
+    private By errorMessage   = By.id("errorMsg");
     
     /**
      * Navigates to base URL and waits for document ready state.
      */
-    public LoginPage open() {
-        driver.get(context.getConfig().getBaseUrl());
+    public LoginPage openBaseUrl() { 
+        TestLogger.logStep("---Opening Base Url - method in LoginPage class");
+        navigateTo(context.getConfig().getBaseUrl());
         waits.waitForPageLoad();
         return this;
     }

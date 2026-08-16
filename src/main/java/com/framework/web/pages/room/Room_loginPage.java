@@ -1,0 +1,74 @@
+package com.framework.web.pages.room;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+
+import com.framework.core.logging.TestLogger;
+import com.framework.web.base.BasePage;
+import com.framework.web.pages.LoginPage;
+
+public class Room_loginPage extends BasePage {
+
+	private By actionsWeList_by = By.xpath("//nav[contains(@class,'landing')]//a");
+	private By login_by = By.xpath("//a[contains(text(),'Log in')]");
+
+	/**
+	 * Navigates to base URL and waits for document ready state.
+	 */
+	public Room_loginPage openBaseUrl() {
+		TestLogger.logStep("Opening Base Url -" + context.getConfig().getBaseUrl());
+		navigateTo(context.getConfig().getBaseUrl());
+		waits.waitForPageLoad();
+		return this;
+	}
+
+	public void clickLogin() {
+		TestLogger.logStep("Click Login btn");
+		waits.waitForPageLoad();
+		actions.click(login_by, "Login Tab");
+	}
+
+	public void clickActionOpetion(String text) {
+		TestLogger.logStep("Start to click -" + text);
+		waits.waitForPageLoad();
+
+		List<WebElement> actionsWeList = driver.findElements(actionsWeList_by);
+
+		boolean isFound = false;
+		List foundTexts = new ArrayList();
+
+		for (int a = 0; a < actionsWeList.size(); a++) {
+
+			String weText = actionsWeList.get(a).getText();
+			
+			if(!weText.isBlank()) {
+			
+
+			if (weText.trim().toLowerCase().contains(text.trim().toLowerCase())) {
+
+				isFound = true;
+
+				actions.click(actionsWeList.get(a), text);
+
+				TestLogger.logStep("Clicked -" + text);
+				return;
+			} else {
+				foundTexts.add(weText);
+				System.out.println(weText);
+			}
+			
+			}
+
+		}
+
+		if (!isFound) {
+			TestLogger.logFailure("Not found -" + text + " But found texts are ->" + foundTexts, null);
+
+		}
+
+	}
+
+}

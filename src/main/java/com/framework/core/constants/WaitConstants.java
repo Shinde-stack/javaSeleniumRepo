@@ -12,8 +12,11 @@ package com.framework.core.constants;
  */
 public final class WaitConstants {
 
-    private WaitConstants() {}
-
+	private WaitConstants() {
+	    throw new UnsupportedOperationException(
+	            "Utility class should not be instantiated.");
+	}
+	
     public static final int EXPLICIT_WAIT_SECONDS = 60;
 
     public static final int PAGE_LOAD_TIMEOUT_SECONDS = 60;
