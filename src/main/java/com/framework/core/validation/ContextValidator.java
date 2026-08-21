@@ -1,66 +1,66 @@
 package com.framework.core.validation;
 
-import com.framework.core.context.ExecutionContext;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * ============================================================================
- * Class Name : ContextValidator
- * ============================================================================
- *
- * Central validator for ExecutionContext.
- *
- * Responsibilities
- * ----------------
- * - Validate all components of an ExecutionContext.
- * - Delegate validation to specialized validators.
- *
- * This class acts as the facade for context validation, keeping lifecycle
- * classes independent of individual validators.
- *
- * Validation Flow
- * ---------------
- *
- * ExecutionContext
- *        │
- *        ├── ConfigValidator
- *        ├── DriverContextValidator
- *        └── TestMetadataValidator
- *
- * ============================================================================
- */
+import com.framework.core.context.ExecutionContext;
+import com.framework.core.excepions.FrameworkException;
+
 public class ContextValidator {
 
-    private final ConfigValidator configValidator;
+    private final ConfigValidator configValidator =
+            new ConfigValidator();
 
-    private final DriverContextValidator driverContextValidator;
+    private final DriverContextValidator driverContextValidator =
+            new DriverContextValidator();
 
-    private final TestMetadataValidator testMetadataValidator;
+    private final TestMetadataValidator testMetadataValidator =
+            new TestMetadataValidator();
 
-    public ContextValidator() {
-
-        this.configValidator = new ConfigValidator();
-        this.driverContextValidator = new DriverContextValidator();
-        this.testMetadataValidator = new TestMetadataValidator();
-    }
-
-    /**
-     * Validates the complete ExecutionContext.
-     *
-     * @param context ExecutionContext to validate
-     */
     public void validate(ExecutionContext context) {
 
         if (context == null) {
-            throw new IllegalArgumentException(
+            throw new FrameworkException(
                     "ExecutionContext cannot be null.");
         }
 
-        configValidator.validate(context.getConfig());
+        List<String> errors = new ArrayList<>();
 
-        driverContextValidator.validate(
-                context.getDriverContext());
+        validateComponent(
+                () -> configValidator.validate(context.getConfig()),
+                errors);
 
-        testMetadataValidator.validate(
-                context.getMetadataContext());
+        validateComponent(
+                () -> driverContextValidator.validate(
+                        context.getDriverContext()),
+                errors);
+
+        validateComponent(
+                () -> testMetadataValidator.validate(
+                        context.getMetadataContext()),
+                errors);
+
+        if (!errors.isEmpty()) {
+
+            StringBuilder builder =
+                    new StringBuilder("ExecutionContext validation failed:\n");
+
+            errors.forEach(error ->
+                    builder.append(" - ").append(error).append("\n"));
+
+            throw new FrameworkException(builder.toString());
+        }
+    }
+
+    private void validateComponent(
+            Runnable validator,
+            List<String> errors) {
+
+        try {
+            validator.run();
+        }
+        catch (FrameworkException ex) {
+            errors.add(ex.getMessage());
+        }
     }
 }

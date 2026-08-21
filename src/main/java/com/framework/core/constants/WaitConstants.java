@@ -17,9 +17,9 @@ public final class WaitConstants {
 	            "Utility class should not be instantiated.");
 	}
 	
-    public static final int EXPLICIT_WAIT_SECONDS = 60;
+    public static final int EXPLICIT_WAIT_SECONDS = 30;
 
-    public static final int PAGE_LOAD_TIMEOUT_SECONDS = 60;
+    public static final int PAGE_LOAD_TIMEOUT_SECONDS = 30;
 
-    public static final int POLLING_INTERVAL_MILLIS = 500;
+    public static final int POLLING_INTERVAL_MILLIS = 100;
 }

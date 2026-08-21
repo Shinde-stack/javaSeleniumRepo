@@ -7,11 +7,8 @@ package com.framework.core.constants;
  *
  * Defines report specific constants.
  *
- * Responsibilities
- * ----------------
- * - Report file names.
- * - Report titles.
- * - Report metadata.
+ * Responsibilities ---------------- - Report file names. - Report titles. -
+ * Report metadata.
  *
  * Directory locations belong to ExecutionConstants.
  *
@@ -19,26 +16,22 @@ package com.framework.core.constants;
  */
 public final class ReportConstants {
 
-    private ReportConstants() {
-        throw new UnsupportedOperationException(
-                "Utility class should not be instantiated.");
-    }
+	private ReportConstants() {
+		throw new UnsupportedOperationException("Utility class should not be instantiated.");
+	}
 
-    /**
-     * Default Extent report filename.
-     */
-    public static final String REPORT_FILE_NAME =
-            "AutomationExecutionReport.html";
+	/**
+	 * Default Extent report filename.
+	 */
+	public static final String REPORT_FILE_NAME = "REPORT_FILE_NAME.html";
 
-    /**
-     * Report display name.
-     */
-    public static final String REPORT_NAME =
-            "Automation Execution Report";
+	/**
+	 * Report display name.
+	 */
+	public static final String REPORT_NAME = "REPORT_NAME";
 
-    /**
-     * Browser title.
-     */
-    public static final String REPORT_TITLE =
-            "Automation Results";
+	/**
+	 * Browser title.
+	 */
+	public static final String REPORT_TITLE = "REPORT_TITLE";
 }

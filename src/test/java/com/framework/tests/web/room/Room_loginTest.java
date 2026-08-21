@@ -17,7 +17,7 @@ import com.framework.web.pages.room.Room_loginPage;
 public class Room_loginTest {
 
 	@Test
-	public void verifyValidLogin() {
+	public void verifyMsg_otpSendToInvalidMobNo() throws InterruptedException {
 		TestLogger.logStep("Login to site");
 
 		// Step 1: page object resolves driver from ExecutionContext via BasePage
@@ -29,32 +29,28 @@ public class Room_loginTest {
 		// Step 3: execute login business flow
 		room_loginPage.clickActionOpetion("Login");
 		
-		
-//		try {
-//			Thread.sleep(5000);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
-	//	room_loginPage.clickLogin();
-		
-		
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		ScreenshotService.capture("Clicked login");
 
+		TestLogger.logStep("Enter Details at login page");
+		room_loginPage.enterMobNo("1234512345");
+		room_loginPage.checkTAndC();
+		room_loginPage.clickSendOtpBtn();
+		
+		TestLogger.logStep("Wait For msg.");
+		
+		Thread.sleep(5000);
+		
+		boolean isMsgDisp = room_loginPage.isMsgDisplayed();
+		String msgText = room_loginPage.getMsgDisplayed();
+		TestLogger.logPass("msgText ->"+msgText);
+		TestLogger.logPass("isMsgDisp ->"+isMsgDisp);
 
+		ScreenshotService.capture("Msg. displayed or not after otp send to invalid mob. no.");
+
+		
 		// Step 5: exercise AssertionEngine hard/soft modes (demo only)
 		AssertionEngine assertionEngine = new AssertionEngine();
-
-		assertionEngine.assertTrue(true, "success msg-1", "failure msg -1", Severity.SOFT);
-
+		assertionEngine.assertTrue(!isMsgDisp, "Msg. displayed after otp send to invalid mob. no. as expected", "Msg. NOT displayed after otp send to invalid mob. no.", Severity.SOFT);
+		
 
 	}
 
