@@ -4,50 +4,44 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 
+import com.framework.core.config.EnvConfig;
 import com.framework.core.excepions.DriverException;
 
 /**
  * DriverFactory
  *
- * Responsibility: ---------------- Create browser driver instances.
+ * Creates browser-specific WebDriver instances.
  *
- * IMPORTANT: ---------- DriverFactory DOES NOT: - Store drivers - Manage driver
- * lifecycle - Quit drivers - Interact with context
+ * Flow:
+ *   DriverManager → createDriver(browserType, headless) → DriverOptionsBuilder → new ChromeDriver/EdgeDriver
  *
- * Those responsibilities belong to DriverManager.
- *
- * Design Principle: ----------------- Single Responsibility Principle (SRP)
+ * Stateless factory: does not store, quit, or bind drivers to ExecutionContext.
  */
 public class DriverFactory {
 
-	/**
-	 * Creates browser driver.
-	 *
-	 * @param browserType Browser to launch
-	 * @param headless    Headless execution flag
-	 * @return WebDriver instance
-	 */
+	public  WebDriver createDriver(EnvConfig config) {
 
-	public static WebDriver createDriver(BrowserType browserType, boolean headless) {
+		BrowserType browserType =config.getBrowserType();
 
 		try {
-
+			
 			switch (browserType) {
 
 			case CHROME:
-				return new ChromeDriver(DriverOptionsBuilder.buildChromeOptions(headless));
+				return new ChromeDriver(DriverOptionsBuilder.buildChromeOptions(config));
 
 			case EDGE:
-				return new EdgeDriver(DriverOptionsBuilder.buildEdgeOptions(headless));
+				return new EdgeDriver(DriverOptionsBuilder.buildEdgeOptions(config));
 
 			default:
 				throw new IllegalArgumentException("Unsupported browser: " + browserType);
 			}
 
-		} catch (Exception ex) {
+		} catch (Exception e) {
 
-			throw new DriverException("Failed to create browser: " + browserType + " - " + ex);
-		}
+			throw new DriverException(
+				    "Failed to create browser: "
+				    + browserType +"Exception is -"+e);		}
 	}
 
 }

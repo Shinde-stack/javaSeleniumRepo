@@ -3,87 +3,47 @@ package com.framework.core.driver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 
+import com.framework.core.config.EnvConfig;
+
 /**
  * DriverOptionsBuilder
  *
- * Responsibility:
- * ----------------
- * Creates and configures browser-specific option objects.
+ * Builds browser-specific option objects (headless, window size, CI flags).
  *
- * Why separate from DriverFactory?
- * --------------------------------
- * DriverFactory should only create drivers.
+ * Flow:
+ *   DriverFactory.createDriver() → buildChromeOptions/buildEdgeOptions(headless) → passed to WebDriver constructor
  *
- * Browser-specific settings such as:
- * - headless mode
- * - notifications
- * - startup arguments
- * - browser preferences
- *
- * should be maintained separately.
- *
- * Benefits:
- * ---------
- * 1. Cleaner DriverFactory
- * 2. Easier browser customization
- * 3. Easier future Grid / Docker support
- * 4. Single place to manage browser arguments
- *
- * Future Upgrade:
- * ---------------
- * Move browser arguments to external config.
+ * Keeps browser argument tuning out of DriverFactory for easier Grid/Docker customization later.
  */
 public final class DriverOptionsBuilder {
 
-    /**
-     * Utility class.
-     * Prevent object creation.
-     */
     private DriverOptionsBuilder() {
     }
 
-    /**
-     * Creates Chrome options.
-     *
-     * @param headless Run browser in headless mode.
-     * @return Configured ChromeOptions
-     */
-    public static ChromeOptions buildChromeOptions(boolean headless) {
+    public static ChromeOptions buildChromeOptions(EnvConfig config) {
 
         ChromeOptions options = new ChromeOptions();
 
-        // Open browser maximized
         options.addArguments("--start-maximized");
-
-        // Disable notification popups
         options.addArguments("--disable-notifications");
-
-        // Better stability in CI/CD environments
         options.addArguments("--disable-dev-shm-usage");
-
-        // Required in many Docker/Linux environments
         options.addArguments("--no-sandbox");
 
-        if (headless) {
+        
+        if (config.isHeadless()) {
             options.addArguments("--headless=new");
         }
 
         return options;
     }
 
-    /**
-     * Creates Edge options.
-     *
-     * @param headless Run browser in headless mode.
-     * @return Configured EdgeOptions
-     */
-    public static EdgeOptions buildEdgeOptions(boolean headless) {
+    public static EdgeOptions buildEdgeOptions(EnvConfig config) {
 
         EdgeOptions options = new EdgeOptions();
 
         options.addArguments("--start-maximized");
 
-        if (headless) {
+        if (config.isHeadless()) {
             options.addArguments("--headless=new");
         }
 

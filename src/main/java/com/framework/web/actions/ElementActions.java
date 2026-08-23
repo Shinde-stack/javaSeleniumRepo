@@ -1,184 +1,151 @@
 package com.framework.web.actions;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
+import com.framework.core.excepions.ElementActionException;
 import com.framework.core.logging.TestLogger;
-import com.framework.web.exceptions.ElementActionException;
 import com.framework.web.waits.WaitManager;
 
 /**
- * ============================================================================
- * Class Name : ElementActions
- * ============================================================================
+ * ElementActions
  *
- * ROLE:
- * -----
- * Central wrapper for ALL Selenium interactions.
+ * Primary UI interaction layer for page objects. Wraps waits, logging, and
+ * exception translation.
  *
- * RESPONSIBILITIES:
- * ------------------
- * - Click actions
- * - Send keys
- * - Get text
- * - Clear field
- * - Scroll (optional)
- * - Logging + reporting integration
- * - Exception wrapping
+ * Flow: page method → ElementActions.click/sendKeys/getText → WaitManager
+ * stabilizes element → Selenium action → log success, or catch and throw
+ * ElementActionException
  *
- * RULE:
- * -----
- * NEVER use WebDriver directly in Page classes.
- * All interactions MUST go through this class.
+ * Page classes must not call WebDriver directly; use this class instead.
  */
+
 public class ElementActions {
 
-    private final WebDriver driver;
-    private final WaitManager waitManager;
+	private final WebDriver driver;
+	private final WaitManager waitManager;
 
-    public ElementActions(WebDriver driver, WaitManager waitManager) {
-        this.driver = driver;
-        this.waitManager = waitManager;
-    }
+	private final JsActions jsActions;
 
-    // =========================================================================
-    // CLICK ACTION
-    // =========================================================================
+	public ElementActions(WebDriver driver, WaitManager waitManager) {
+		this.driver = driver;
+		this.waitManager = waitManager;
+		this.jsActions = new JsActions(driver, waitManager);
 
-    public void click(By locator, String elementName) {
+	}
 
-        try {
-            TestLogger.logAction("Clicking on: " + elementName);
+	public void click(By locator, String elementName) {
 
-            WebElement element = waitManager.waitForClickable(locator);
+		try {
+			TestLogger.logAction("Clicking on: " + elementName);
 
-            element.click();
+			WebElement element = waitManager.waitForClickable(locator, elementName);
 
-            TestLogger.logStep("Clicked successfully: " + elementName);
+			element.click();
 
-        } catch (Exception e) {
+			TestLogger.logStep("Clicked successfully: " + elementName);
 
-            TestLogger.logFailure("Click failed: " + elementName, e);
+		} catch (Exception e) {
 
-            throw new ElementActionException(
-                    "Failed to click element: " + elementName, e);
-        }
-    }
+			TestLogger.logFailure("Click failed: " + elementName, e);
 
-    // =========================================================================
-    // SEND KEYS
-    // =========================================================================
+			throw new ElementActionException("Failed to click element: " + elementName, e);
+		}
+	}
+	
+	public void click(WebElement locator, String elementName) {
 
-    public void sendKeys(By locator, String value, String elementName) {
+		try {
+			TestLogger.logAction("Clicking on: " + elementName);
 
-        try {
-            TestLogger.logAction("Entering value in: " + elementName);
+			WebElement element = waitManager.waitForClickable(locator, elementName);
 
-            WebElement element = waitManager.waitForVisible(locator);
+			element.click();
 
-            element.clear();
-            element.sendKeys(value);
+			TestLogger.logStep("Clicked successfully: " + elementName);
 
-            TestLogger.logStep("Value entered in: " + elementName);
+		} catch (Exception e) {
 
-        } catch (Exception e) {
+			TestLogger.logFailure("Click failed: " + elementName, e);
 
-            TestLogger.logFailure("SendKeys failed: " + elementName, e);
+			throw new ElementActionException("Failed to click element: " + elementName, e);
+		}
+	}
 
-            throw new ElementActionException(
-                    "Failed to enter value in: " + elementName, e);
-        }
-    }
+	public void sendKeys(By locator, String value, String elementName) {
 
-    // =========================================================================
-    // GET TEXT
-    // =========================================================================
+		try {
+			TestLogger.logAction("Entering value in: " + elementName);
 
-    public String getText(By locator, String elementName) {
+			WebElement element = waitManager.waitForVisible(locator, elementName);
 
-        try {
-            TestLogger.logAction("Getting text from: " + elementName);
+			element.clear();
+			element.sendKeys(value);
 
-            WebElement element = waitManager.waitForVisible(locator);
+			TestLogger.logStep("Value entered in: " + elementName);
 
-            String text = element.getText();
+		} catch (Exception e) {
 
-            TestLogger.logStep("Text retrieved from: " + elementName);
+			TestLogger.logFailure("SendKeys failed: " + elementName, e);
 
-            return text;
+			throw new ElementActionException("Failed to enter value in: " + elementName, e);
+		}
+	}
 
-        } catch (Exception e) {
+	public String getText(By locator, String elementName) {
 
-            TestLogger.logFailure("GetText failed: " + elementName, e);
+		try {
+			TestLogger.logAction("Getting text from: " + elementName);
 
-            throw new ElementActionException(
-                    "Failed to get text from: " + elementName, e);
-        }
-    }
+			WebElement element = waitManager.waitForVisible(locator, elementName);
 
-    // =========================================================================
-    // SCROLL INTO VIEW
-    // =========================================================================
+			String text = element.getText();
 
-    public void scrollIntoView(By locator, String elementName) {
+			TestLogger.logStep("Text retrieved from: " + elementName);
 
-        try {
-            TestLogger.logAction("Scrolling to: " + elementName);
+			return text;
 
-            WebElement element = waitManager.waitForPresence(locator);
+		} catch (Exception e) {
 
-            ((JavascriptExecutor) driver)
-                    .executeScript("arguments[0].scrollIntoView(true);", element);
+			TestLogger.logFailure("GetText failed: " + elementName, e);
 
-            TestLogger.logStep("Scrolled to: " + elementName);
+			throw new ElementActionException("Failed to get text from: " + elementName, e);
+		}
+	}
 
-        } catch (Exception e) {
+	public boolean isDisplayed(By locator, String elementName) {
 
-            TestLogger.logFailure("Scroll failed: " + elementName, e);
+		try {
+			TestLogger.logAction("Checking visibility: " + elementName);
 
-            throw new ElementActionException(
-                    "Failed to scroll to: " + elementName, e);
-        }
-    }
+			WebElement element = waitManager.waitForPresence(locator, elementName);
 
-    // =========================================================================
-    // IS DISPLAYED
-    // =========================================================================
+			boolean displayed = element.isDisplayed();
 
-    public boolean isDisplayed(By locator, String elementName) {
+			TestLogger.logStep("Visibility checked: " + elementName);
 
-        try {
-            TestLogger.logAction("Checking visibility: " + elementName);
+			return displayed;
 
-            WebElement element = waitManager.waitForPresence(locator);
+		} catch (Exception e) {
 
-            boolean displayed = element.isDisplayed();
+			TestLogger.logFailure("Visibility check failed: " + elementName, e);
 
-            TestLogger.logStep("Visibility checked: " + elementName);
+			return false;
+		}
+	}
 
-            return displayed;
+	// js actions
 
-        } catch (Exception e) {
+	public void scrollIntoView(By locator, String elementName) {
 
-            TestLogger.logFailure("Visibility check failed: " + elementName, e);
+		jsActions.scrollTo(locator, elementName);
 
-            return false;
-        }
-    }
+	}
 
-    // =========================================================================
-    // FUTURE EXTENSIONS (IMPORTANT)
-    // =========================================================================
-    /*
-     * Planned improvements:
-     * ---------------------
-     * 1. Retry mechanism for flaky elements
-     * 2. Smart click (JS click fallback)
-     * 3. Highlight element before action
-     * 4. Screenshot capture on failure
-     * 5. Soft failure support
-     * 6. Action metrics (time taken per step)
-     */
+	public void JsClick(By locator, String elementName) {
+
+		jsActions.jsClick(locator, elementName);
+
+	}
 }

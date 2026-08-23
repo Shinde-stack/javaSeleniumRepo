@@ -1,52 +1,65 @@
 package com.framework.core.context;
 
-import com.framework.core.logging.TestLogger;
+import com.framework.core.excepions.FrameworkException;
 
+/**
+ * ExecutionContextHolder
+ *
+ * ThreadLocal registry for the active ExecutionContext on the current test
+ * thread.
+ *
+ * Flow: ContextLifecycleManager.initializeContext() → setContext() → BasePage /
+ * TestLogger / ScreenshotService → getContext() → cleanupContext() →
+ * removeContext()
+ *
+ * Throws IllegalStateException if getContext() is called before initialization.
+ */
 public final class ExecutionContextHolder {
 
-    private ExecutionContextHolder() {
-    }
+	
+	private ExecutionContextHolder() {
+	    throw new UnsupportedOperationException(
+	        "ExecutionContextHolder - Utility class should not be instantiated.");
+	}
 
-    private static final ThreadLocal<ExecutionContext> CONTEXT =
-            new ThreadLocal<>();
+	private static final ThreadLocal<ExecutionContext> CONTEXT = new ThreadLocal<>();
 
-    public static void setContext(ExecutionContext context) {
+	/**
+	 * Stores the ExecutionContext for the current thread.
+	 */
+	public static void set(ExecutionContext context) {
 
-    	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("setContext");
+		if (context == null) {
+			throw new IllegalArgumentException("ExecutionContext cannot be null");
+		}
 
-        if (context == null) {
-            throw new IllegalArgumentException("ExecutionContext cannot be null");
-        }
+		CONTEXT.set(context);
+	}
 
-        CONTEXT.set(context);
-    }
+	/**
+	 * Returns the current thread's ExecutionContext.
+	 *
+	 * @throws FrameworkException
+	 *         if no context has been initialized.
+	 */
+	public static ExecutionContext get() {
 
-    /**
-     * SAFE ACCESS LAYER
-     *
-     * DO NOT validate here.
-     * Validation should happen in BaseTest or lifecycle manager.
-     */
-    public static ExecutionContext getContext() {
-    	   // TEMP DEBUG LOG (REMOVE LATER)
-     //   TestLogger.logStep("getContext");
+		ExecutionContext context = CONTEXT.get();
 
-        ExecutionContext context = CONTEXT.get();
+		if (context == null) {
+			throw new FrameworkException(
+					"ExecutionContext not initialized for thread: " + Thread.currentThread().getName());
+		}
 
-        if (context == null) {
-            throw new IllegalStateException(
-                    "ExecutionContext not initialized for thread: "
-                            + Thread.currentThread().getName());
-        }
+		return context;
+	}
 
-        return context;
-    }
-
-    public static void removeContext() {
-    	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("removeContext");
-
-        CONTEXT.remove();
-    }
+	/**
+	 * Removes the current thread's ExecutionContext.
+	 *
+	 * Must be called in finally blocks.
+	 */
+	public static void clear() {
+		CONTEXT.remove();
+	}
 }

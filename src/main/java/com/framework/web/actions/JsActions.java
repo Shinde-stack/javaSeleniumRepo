@@ -1,66 +1,74 @@
 package com.framework.web.actions;
 
-import java.time.Duration;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.WebElement;
 
+import com.framework.core.excepions.ElementActionException;
 import com.framework.core.logging.TestLogger;
+import com.framework.web.waits.WaitManager;
 
 /**
- * ============================================================================
  * JsActions
- * ============================================================================
  *
- * Responsibility:
- * - JS-based fallback interactions
- * - Used only when normal Selenium fails
+ * JavaScript-based fallback interactions when standard Selenium actions fail.
  *
- * IMPORTANT:
- * - Should NOT be primary click strategy
- * - Used for stubborn UI elements only
- * ============================================================================
+ * Flow: stubborn element → JsActions.click/scrollTo → executeScript on located
+ * element
+ *
+ * Not wired into ElementActions yet; use only as a secondary strategy, not the
+ * default path.
  */
 public class JsActions {
 
-    private final JavascriptExecutor js;
-    private final WebDriver driver;
+	private final JavascriptExecutor js;
+	private final WebDriver driver;
+	private final WaitManager waitManager;
 
-    public JsActions(WebDriver driver) {
-        this.driver = driver;
-        this.js = (JavascriptExecutor) driver;
-    }
+	public JsActions(WebDriver driver, WaitManager waitManager) {
+		this.driver = driver;
+		this.js = (JavascriptExecutor) driver;
+		this.waitManager = waitManager;
 
-    public void click(By by) {
-    	
-        TestLogger.logAction( "Js click: ");
+	}
 
-        js.executeScript("arguments[0].click();",
-                driver.findElement(by));
-    }
+	public void jsClick(By locator, String elementName) {
 
-    public void scrollTo(By by) {
-    	
-        TestLogger.logAction( "Js Scroll element");
+		try {
+			TestLogger.logAction("(JS)Clicking on: " + elementName);
 
-        js.executeScript("arguments[0].scrollIntoView(true);",
-                driver.findElement(by));
-    }
-    /**
-     * Waits for the entire HTML document to load completely.
-     * @param driver The active WebDriver instance
-     * @param timeoutInSeconds Maximum time to wait before throwing a timeout exception
-     */
-    public void waitForPageLoad(WebDriver driver, long timeoutInSeconds) {
-    	
-		TestLogger.logStep("Js waitForPageLoad - temp method from web...not as per our framework");
+			WebElement element = waitManager.waitForClickable(locator, elementName);
 
-        new WebDriverWait(driver, Duration.ofSeconds(timeoutInSeconds)).until(
-            webDriver -> ((JavascriptExecutor) webDriver)
-                .executeScript("return document.readyState")
-                .toString()
-                .equals("complete")
-        );}
+			js.executeScript("arguments[0].click();", element);
+
+			TestLogger.logStep("(JS) Clicked successfully: " + elementName);
+
+		} catch (Exception e) {
+
+			TestLogger.logFailure("(JS) Click failed: " + elementName, e);
+
+			throw new ElementActionException("Failed to click element: " + elementName, e);
+		}
+	}
+
+	public void scrollTo(By locator, String elementName) {
+
+		try {
+			TestLogger.logAction("Scroll to element: " + elementName);
+
+			waitManager.waitForPageLoad();
+
+			js.executeScript("arguments[0].scrollIntoView(true);", driver.findElement(locator));
+
+			TestLogger.logStep("Scrolled to element: " + elementName);
+
+		} catch (Exception e) {
+
+			TestLogger.logFailure("Failed to scroll to element: " + elementName, e);
+
+			throw new ElementActionException("Failed to scroll to element: " + elementName, e);
+		}
+	}
+
 }

@@ -2,24 +2,14 @@ package com.framework.core.context;
 
 
 /**
- * Represents the lifecycle state of a test execution context.
+ * ContextState
  *
- * Used to:
- * - Prevent invalid operations
- * - Track execution progress
- * - Support future telemetry/reporting
+ * Lifecycle state of a single test's ExecutionContext.
  *
- * Typical flow:
+ * Flow:
+ *   CREATED → INITIALIZED (config loaded) → RUNNING (driver ready) → DESTROYED (cleanup complete)
  *
- * CREATED
- *    ↓
- * INITIALIZED
- *    ↓
- * RUNNING
- *    ↓
- * CLEANING_UP
- *    ↓
- * DESTROYED
+ * CLEANING_UP is reserved for multi-step teardown (API/DB sessions) before DESTROYED.
  */
 public enum ContextState {
 

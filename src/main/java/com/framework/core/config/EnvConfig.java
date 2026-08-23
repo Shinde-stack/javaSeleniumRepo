@@ -3,128 +3,105 @@ package com.framework.core.config;
 import com.framework.core.driver.BrowserType;
 
 /**
- * Runtime configuration loaded from properties file.
+ * EnvConfig
  *
- * Populated by:
- * ConfigLoader
+ * Strongly typed runtime configuration loaded once per test from properties
+ * file.
  *
- * Used by:
- * BaseTest
- * DriverManager
- * Logger
- * Reporting
- * Screenshot Service
+ * Flow: ConfigLoader.load() → EnvConfig → ExecutionContext.setConfig() →
+ * consumed by driver, logger, reporting
+ *
+ * Populated via setters in ConfigLoader; read-only from the perspective of
+ * tests and pages.
  */
 public class EnvConfig {
 
-    // ---------------------------------------------------------
-    // Browser Configuration
-    // ---------------------------------------------------------
+	private BrowserType browserType;
 
-    private BrowserType browserType;
+	private boolean headless;
 
-    private boolean headless;
+	private String baseUrl;
 
-    private String baseUrl;
+	private boolean logToConsole;
 
-    // ---------------------------------------------------------
-    // Logging Configuration
-    // ---------------------------------------------------------
+	private boolean logToReport;
 
-    private boolean logToConsole;
+	private boolean logElementActions;
 
-    private boolean logToReport;
+	private boolean logWaitActions;
 
-    private boolean logElementActions;
+	private boolean screenshotOnFailure;
 
-    private boolean logWaitActions;
+	public BrowserType getBrowserType() {
+		return browserType;
+	}
 
-    // ---------------------------------------------------------
-    // Reporting Configuration
-    // ---------------------------------------------------------
+	public void setBrowserType(BrowserType browserType) {
+		this.browserType = browserType;
+	}
 
-    private boolean screenshotOnFailure;
+	public boolean isHeadless() {
+		return headless;
+	}
 
-    // ---------------------------------------------------------
-    // Getters / Setters
-    // ---------------------------------------------------------
+	public void setHeadless(boolean headless) {
+		this.headless = headless;
+	}
 
-    public BrowserType getBrowserType() {
-        return browserType;
-    }
+	public String getBaseUrl() {
+		return baseUrl;
+	}
 
-    public void setBrowserType(BrowserType browserType) {
-        this.browserType = browserType;
-    }
+	public void setBaseUrl(String baseUrl) {
+		this.baseUrl = baseUrl;
+	}
 
-    public boolean isHeadless() {
-        return headless;
-    }
+	public boolean isLogToConsole() {
+		return logToConsole;
+	}
 
-    public void setHeadless(boolean headless) {
-        this.headless = headless;
-    }
+	public void setLogToConsole(boolean logToConsole) {
+		this.logToConsole = logToConsole;
+	}
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
+	public boolean isLogToReport() {
+		return logToReport;
+	}
 
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
-    }
+	public void setLogToReport(boolean logToReport) {
+		this.logToReport = logToReport;
+	}
 
-    public boolean isLogToConsole() {
-        return logToConsole;
-    }
+	public boolean isLogElementActions() {
+		return logElementActions;
+	}
 
-    public void setLogToConsole(boolean logToConsole) {
-        this.logToConsole = logToConsole;
-    }
+	public void setLogElementActions(boolean logElementActions) {
+		this.logElementActions = logElementActions;
+	}
 
-    public boolean isLogToReport() {
-        return logToReport;
-    }
+	public boolean isLogWaitActions() {
+		return logWaitActions;
+	}
 
-    public void setLogToReport(boolean logToReport) {
-        this.logToReport = logToReport;
-    }
+	public void setLogWaitActions(boolean logWaitActions) {
+		this.logWaitActions = logWaitActions;
+	}
 
-    public boolean isLogElementActions() {
-        return logElementActions;
-    }
+	public boolean isScreenshotOnFailure() {
+		return screenshotOnFailure;
+	}
 
-    public void setLogElementActions(boolean logElementActions) {
-        this.logElementActions = logElementActions;
-    }
+	public void setScreenshotOnFailure(boolean screenshotOnFailure) {
+		this.screenshotOnFailure = screenshotOnFailure;
+	}
 
-    public boolean isLogWaitActions() {
-        return logWaitActions;
-    }
+	@Override
+	public String toString() {
 
-    public void setLogWaitActions(boolean logWaitActions) {
-        this.logWaitActions = logWaitActions;
-    }
-
-    public boolean isScreenshotOnFailure() {
-        return screenshotOnFailure;
-    }
-
-    public void setScreenshotOnFailure(boolean screenshotOnFailure) {
-        this.screenshotOnFailure = screenshotOnFailure;
-    }
-
-    @Override
-    public String toString() {
-
-        return "EnvConfig{" +
-                "browserType=" + browserType +
-                ", headless=" + headless +
-                ", baseUrl='" + baseUrl + '\'' +
-                ", logToConsole=" + logToConsole +
-                ", logToReport=" + logToReport +
-                ", logElementActions=" + logElementActions +
-                ", logWaitActions=" + logWaitActions +
-                ", screenshotOnFailure=" + screenshotOnFailure +
-                '}';
-    }
+		return "EnvConfig{" + "browserType=" + browserType + ", headless=" + headless + ", baseUrl='" + baseUrl + '\''
+				+ ", logToConsole=" + logToConsole + ", logToReport=" + logToReport + ", logElementActions="
+				+ logElementActions + ", logWaitActions=" + logWaitActions + ", screenshotOnFailure="
+				+ screenshotOnFailure + '}';
+	}
 }

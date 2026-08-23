@@ -1,62 +1,104 @@
 package com.framework.core.driver;
 
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 
+import com.framework.core.config.EnvConfig;
+import com.framework.core.context.DriverContext;
 import com.framework.core.context.ExecutionContext;
 import com.framework.core.excepions.DriverException;
 
 /**
  * DriverManager
  *
- * Responsibility: ---------------- Manage WebDriver lifecycle.
+ * Manages the complete WebDriver lifecycle for a single test execution.
  *
- * Responsibilities: ----------------- Initialize driver Store driver in
- * ExecutionContext Retrieve driver Close driver
+ * Responsibilities: - Create WebDriver - Store WebDriver in DriverContext -
+ * Provide access to current WebDriver - Quit WebDriver - Clear DriverContext
+ * during cleanup
  *
- * Architecture: -------------
- *
- * Test ↓ BaseTest ↓ DriverManager ↓ DriverFactory ↓ Browser Driver
- *
+ * Does NOT: - Build browser options - Decide browser configuration - Read
+ * properties files
  */
 public class DriverManager {
 
+
+	private final DriverFactory driverFactory;
+
+	public DriverManager(DriverFactory driverFactory) {
+	    this.driverFactory = driverFactory;
+	}
+	
 	/**
-	 * Creates and stores driver inside current ExecutionContext.
-	 *
-	 * @param context     Current execution context
-	 * @param browserType Browser type
-	 * @param headless    Headless mode flag
+	 * Creates a WebDriver and stores it in the supplied ExecutionContext.
 	 */
-	public void initializeDriver(ExecutionContext context, BrowserType browserType, boolean headless) {
+	public void initializeDriver(ExecutionContext context) {
 
-		WebDriver driver =
-		        DriverFactory.createDriver(browserType, headless);
-
-		if (driver == null) {
-		    throw new DriverException(
-		            "Failed to create driver: " + browserType);
+		if (context == null) {
+			throw new IllegalArgumentException("ExecutionContext cannot be null.");
 		}
+
+		EnvConfig config = context.getConfig();
+
+		WebDriver driver = driverFactory.createDriver(config);
 
 		context.getDriverContext().setDriver(driver);
 	}
 
 	/**
-	 * Safely closes browser.
-	 *
-	 * @param context Current execution context
+	 * Returns the current WebDriver.
 	 */
-	public void quitDriver(ExecutionContext context) {
-		// Check if context and driver sub-context reference are active
-		if (context != null) {
-			try {
-				// Closes native browser application processes
-				context.getDriverContext().quitDriver();
-			} finally {
-				// CRITICAL: Wipe reference so next test block on this thread starts fresh
-				context.getDriverContext().setDriver(null);
-			}
+	public WebDriver getDriver(ExecutionContext context) {
+
+		if (context == null) {
+			throw new IllegalArgumentException("ExecutionContext cannot be null.");
 		}
+
+		return context.getDriverContext().getDriver();
 	}
 
+	/**
+	 * Returns true if a WebDriver has been initialized.
+	 */
+	public boolean hasDriver(ExecutionContext context) {
+
+		if (context == null) {
+			return false;
+		}
+
+		return context.getDriverContext().hasDriver();
+	}
+
+	/**
+	 * Quits the browser and clears the DriverContext.
+	 *
+	 * Cleanup is best-effort. Driver reference is always removed even if
+	 * driver.quit() throws an exception.
+	 */
+	public void quitDriver(ExecutionContext context) {
+
+		if (context == null) {
+			return;
+		}
+
+		DriverContext driverContext = context.getDriverContext();
+
+		if (!driverContext.hasDriver()) {
+			return;
+		}
+
+		WebDriver driver = driverContext.getDriver();
+
+		try {
+
+			driver.quit();
+
+		} catch (Exception ex) {
+
+			throw new DriverException("Failed to quit WebDriver. " + ex);
+
+		} finally {
+
+			driverContext.setDriver(null);
+		}
+	}
 }

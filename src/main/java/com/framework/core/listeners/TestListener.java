@@ -8,13 +8,35 @@ import org.testng.ITestListener;
 import org.testng.ITestResult;
 
 import com.aventstack.extentreports.ExtentTest;
+import com.framework.core.constants.ReportConstants;
 import com.framework.core.context.ExecutionContext;
 import com.framework.core.lifecycle.ContextLifecycleManager;
 import com.framework.core.logging.TestLogger;
-import com.framework.core.reporting.ReportConstants;
 import com.framework.core.reporting.ReportManager;
+import com.framework.core.reporting.ScreenshotService;
 
-public class TestListener implements ITestListener, ISuiteListener {
+/**
+ * ============================================================================
+ * Class Name : TestListener
+ * ============================================================================
+ *
+ * Coordinates the framework lifecycle with TestNG execution.
+ *
+ * Responsibilities
+ * ----------------
+ * - Initialize reporting.
+ * - Start framework lifecycle.
+ * - Populate test metadata.
+ * - Update execution report.
+ * - Capture screenshots on failures.
+ * - Release framework resources.
+ *
+ * This class acts only as an orchestration layer.
+ *
+ * ============================================================================
+ */
+public class TestListener
+        implements ITestListener, ISuiteListener {
 
     private static final Logger log =
             LoggerFactory.getLogger(TestListener.class);
@@ -25,9 +47,20 @@ public class TestListener implements ITestListener, ISuiteListener {
     @Override
     public void onStart(ISuite suite) {
 
-        log.info("Suite Started");
+        log.info("Suite Started : {}", suite.getName());
 
-        String reportPath =ReportConstants.REPORT_DIR + ReportConstants.REPORT_FILE_NAME;
+        /*
+         * Temporary.
+         *
+         * Will be replaced by:
+         *
+         * ExecutionWorkspace
+         *      -> ExecutionDirectories
+         *      -> Report File
+         */
+        String reportPath =
+                "target/AutomationExecutionReport/"
+                        + ReportConstants.REPORT_FILE_NAME;
 
         ReportManager.initReport(reportPath);
     }
@@ -40,69 +73,79 @@ public class TestListener implements ITestListener, ISuiteListener {
 
         log.info("Starting Test : {}", testName);
 
-        /*
-         * STEP 1
-         * Create Extent Test FIRST.
-         */
-
         ExtentTest extentTest =
                 ReportManager.createTest(testName);
 
         ReportManager.setTest(extentTest);
 
-        /*
-         * STEP 2
-         * Initialize framework.
-         */
-
         ExecutionContext context =
-                lifecycle.initializeContext();
+                lifecycle.start();
 
-        lifecycle.initDriver(context);
+        context.getMetadataContext()
+                .setTestName(testName);
 
-        /*
-         * STEP 3
-         * Safe to use TestLogger now.
-         */
-
-        TestLogger.logStep("Framework initialized");
+        log.info("Framework initialized successfully.");
     }
 
     @Override
     public void onTestSuccess(ITestResult result) {
 
-        TestLogger.logStep("Test Passed");
+        try {
 
-        ReportManager.pass(result.getName());
+            TestLogger.logStep("Test Passed");
+
+            ReportManager.pass(result.getName());
+
+        } finally {
+
+            lifecycle.destroyContext();
+
+            ReportManager.removeTest();
+        }
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
 
-        TestLogger.logFailure(
-                "Test Failed",
-                result.getThrowable());
+        try {
 
-        ReportManager.fail(result.getThrowable());
+            TestLogger.logFailure(
+                    "Test Failed",
+                    result.getThrowable());
 
-        /*
-         * Future:
-         * ScreenshotService.capture()
-         */
+            ReportManager.fail(result.getThrowable());
+
+            ScreenshotService.capture("Failure");
+
+        } finally {
+
+            lifecycle.destroyContext();
+
+            ReportManager.removeTest();
+        }
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
 
-        TestLogger.logStep("Test Skipped");
+        try {
 
-        ReportManager.info(result.getName());
+            TestLogger.logWarning("Test Skipped");
+
+            ReportManager.warn(result.getName());
+
+        } finally {
+
+            lifecycle.destroyContext();
+
+            ReportManager.removeTest();
+        }
     }
 
     @Override
     public void onFinish(ISuite suite) {
 
-        log.info("Suite Finished");
+        log.info("Suite Finished : {}", suite.getName());
 
         ReportManager.flush();
     }

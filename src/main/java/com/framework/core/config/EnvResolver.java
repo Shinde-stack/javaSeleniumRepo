@@ -1,39 +1,46 @@
 package com.framework.core.config;
 
-import com.framework.core.logging.TestLogger;
+import com.framework.core.constants.ConfigConstants;
+import com.framework.core.enums.EnvironmentType;
 
+
+/**
+ * EnvResolver
+ *
+ * Resolves the active environment name used to pick a properties file.
+ *
+ * Flow: resolve() → System property "env" → OS env "ENV" → default "qa" →
+ * ConfigLoader builds path config/{env}.properties
+ */
 public class EnvResolver {
-	
-	
-    /**
-     * Resolves runtime environment.
-     *
-     * Priority order:
-     * 1. System property (-Denv=qa)
-     * 2. Default fallback (qa)
-     */
-	
-    public static String resolve() {
 
-    	   // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("resolve");
+	public static EnvironmentType resolve() {
 
-        // 1. JVM argument (highest priority)
-        String env = System.getProperty("env");
+		// Priority 1: JVM argument (-Denv=qa)
+		String env = System.getProperty("env");
 
-        // 2. OS / CI environment variable
-        if (env == null || env.isBlank()) {
-            env = System.getenv("ENV");
-        }
+		// Priority 2: OS / CI environment variable
+		if (isBlank(env)) {
+			env = System.getenv("ENV");
+		}
 
-        // 3. fallback default
-        if (env == null || env.isBlank()) {
-            env = "qa";
-        }
+		// Priority 3: default fallback
+		if (isBlank(env)) {
 
-        // TEMP DEBUG LOG (REMOVE LATER)
-        TestLogger.logStep("env.toLowerCase() ->"+env.toLowerCase());
-        
-        return env.toLowerCase();
-    }
+			env = ConfigConstants.DEFAULT_FALLBACK_ENV;
+
+		}
+
+		return EnvironmentType.from(env);
+	}
+
+	private static boolean isBlank(String text) {
+
+		if (text == null || text.isBlank()) {
+			return true;
+		} else {
+			return false;
+		}
+
+	}
 }

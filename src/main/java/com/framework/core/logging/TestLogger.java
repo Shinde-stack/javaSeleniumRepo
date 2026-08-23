@@ -9,38 +9,16 @@ import com.framework.core.context.ExecutionContextHolder;
 import com.framework.core.reporting.ReportManager;
 
 /**
- * ============================================================================
- * Class Name : TestLogger
- * ============================================================================
+ * TestLogger
  *
- * Purpose:
- * --------
- * Centralized logging facade for framework.
+ * Unified logging facade: console (Log4j) and HTML report (Extent) behind one API.
  *
- * All framework components should log only through this class.
+ * Flow:
+ *   framework component → TestLogger.logStep/logAction/logPass/...
+ *   → read EnvConfig from ExecutionContext (if available)
+ *   → write to LOG (console) and/or ReportManager (Extent) based on config flags
  *
- * Responsibilities:
- * -----------------
- * - Console logging (Log4j)
- * - Report logging (Extent)
- * - Config-based logging control
- *
- * Non Responsibilities:
- * ---------------------
- * - Report lifecycle management
- * - ExtentTest creation
- * - Assertion execution
- *
- * Architecture:
- * -------------
- *
- * Framework Component
- *         ↓
- *     TestLogger
- *      ↙     ↘
- *  Log4j    ReportManager
- *
- * ============================================================================
+ * Does not create ExtentTest or manage report lifecycle; ReportManager owns that.
  */
 public final class TestLogger {
 
@@ -50,13 +28,6 @@ public final class TestLogger {
     private TestLogger() {
     }
 
-    /**
-     * Business level execution step.
-     *
-     * Example:
-     * Login successful
-     * Order created
-     */
     public static void logStep(String message) {
 
         EnvConfig config = getConfig();
@@ -75,24 +46,15 @@ public final class TestLogger {
         }
     }
 
-    /**
-     * Element interaction logging.
-     *
-     * Example:
-     * Clicked Login button
-     * Entered Username
-     */
     public static void logAction(String message) {
 
         EnvConfig config = getConfig();
 
-        // Framework startup phase
         if (config == null) {
             LOG.debug(message);
             return;
         }
 
-        // Feature disabled
         if (!config.isLogElementActions()) {
             return;
         }
@@ -106,24 +68,15 @@ public final class TestLogger {
         }
     }
 
-    /**
-     * Wait operation logging.
-     *
-     * Example:
-     * Waiting for visibility
-     * Waiting for clickability
-     */
     public static void logWait(String message) {
 
         EnvConfig config = getConfig();
 
-        // Framework startup phase
         if (config == null) {
             LOG.debug(message);
             return;
         }
 
-        // Feature disabled
         if (!config.isLogWaitActions()) {
             return;
         }
@@ -137,9 +90,6 @@ public final class TestLogger {
         }
     }
 
-    /**
-     * Generic informational log.
-     */
     public static void logInfo(String message) {
 
         EnvConfig config = getConfig();
@@ -158,11 +108,6 @@ public final class TestLogger {
         }
     }
 
-    /**
-     * Assertion or execution success.
-     *
-     * Generates PASS status in report.
-     */
     public static void logPass(String message) {
 
         LOG.info(message);
@@ -173,11 +118,6 @@ public final class TestLogger {
         }
     }
 
-    /**
-     * Assertion or execution failure.
-     *
-     * Generates FAIL status in report.
-     */
     public static void logFailure(
             String message,
             Throwable throwable) {
@@ -197,14 +137,14 @@ public final class TestLogger {
     }
 
     /**
-     * Reads current runtime configuration.
+     * Returns EnvConfig from the active ExecutionContext, or null during early bootstrap.
      */
     private static EnvConfig getConfig() {
 
         try {
 
             ExecutionContext context =
-                    ExecutionContextHolder.getContext();
+                    ExecutionContextHolder.get();
 
             return context != null
                     ? context.getConfig()
@@ -213,6 +153,24 @@ public final class TestLogger {
         } catch (Exception e) {
 
             return null;
+        }
+    }
+    
+    public static void logWarning(String message) {
+
+        EnvConfig config = getConfig();
+
+        if (config == null) {
+            LOG.warn(message);
+            return;
+        }
+
+        if (config.isLogToConsole()) {
+            LOG.warn(message);
+        }
+
+        if (config.isLogToReport()) {
+            ReportManager.warn(message);
         }
     }
 }

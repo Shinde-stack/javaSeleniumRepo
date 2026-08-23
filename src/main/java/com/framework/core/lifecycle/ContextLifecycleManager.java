@@ -8,76 +8,211 @@ import com.framework.core.config.EnvConfig;
 import com.framework.core.context.ContextState;
 import com.framework.core.context.ExecutionContext;
 import com.framework.core.context.ExecutionContextHolder;
+import com.framework.core.driver.DriverFactory;
 import com.framework.core.driver.DriverManager;
+import com.framework.core.execution.ExecutionDirectoryManager;
+import com.framework.core.execution.ExecutionWorkspace;
+import com.framework.core.execution.ExecutionWorkspaceManager;
+import com.framework.core.validation.ContextValidator;
+import com.framework.core.excepions.FrameworkException;
 
+/**
+ * ============================================================================
+ * Class Name : ContextLifecycleManager
+ * ============================================================================
+ *
+ * Orchestrates the lifecycle of one test execution.
+ *
+ * Responsibilities
+ * ----------------
+ * - Load framework configuration.
+ * - Create ExecutionWorkspace.
+ * - Create ExecutionContext.
+ * - Validate ExecutionContext.
+ * - Initialize WebDriver.
+ * - Launch application.
+ * - Destroy framework resources.
+ *
+ * This class is the composition root for per-test execution.
+ *
+ * Flow
+ * ----
+ *
+ * start()
+ *      │
+ *      ▼
+ * create ExecutionWorkspace
+ *      │
+ *      ▼
+ * create ExecutionContext
+ *      │
+ *      ▼
+ * initializeDriver()
+ *      │
+ *      ▼
+ * launchApplication()
+ *      │
+ *      ▼
+ * destroyContext()
+ *
+ * ============================================================================
+ */
 public class ContextLifecycleManager {
 
     private static final Logger log =
             LoggerFactory.getLogger(ContextLifecycleManager.class);
 
-    private final DriverManager driverManager = new DriverManager();
+    private final ConfigLoader configLoader;
+
+    private final ContextValidator contextValidator;
+
+    private final DriverFactory driverFactory;
+
+    private final DriverManager driverManager;
+
+    private final ExecutionWorkspaceManager executionWorkspaceManager;
+
+    public ContextLifecycleManager() {
+
+        this.configLoader = new ConfigLoader();
+
+        this.contextValidator = new ContextValidator();
+
+        this.driverFactory = new DriverFactory();
+
+        this.driverManager = new DriverManager(driverFactory);
+
+        this.executionWorkspaceManager =
+                new ExecutionWorkspaceManager(
+                        new ExecutionDirectoryManager());
+    }
 
     /**
-     * Creates ExecutionContext.
-     *
-     * Does NOT initialize reporting.
-     * Does NOT perform test logging.
+     * Executes the complete framework startup sequence.
      */
-    public ExecutionContext initializeContext() {
+    public ExecutionContext start() {
 
-        log.info("Initializing ExecutionContext");
+        log.info("Starting framework lifecycle.");
 
-        EnvConfig config = new ConfigLoader().load();
+        ExecutionContext context = initializeContext();
 
-        ExecutionContext context = new ExecutionContext();
+        initializeDriver(context);
 
-        context.setConfig(config);
-        context.setState(ContextState.CREATED);
+        launchApplication(context);
 
-        ExecutionContextHolder.setContext(context);
-
-        context.setState(ContextState.INITIALIZED);
-
-        log.info("ExecutionContext initialized");
+        log.info("Framework started successfully.");
 
         return context;
     }
 
     /**
-     * Initializes browser.
+     * Creates and initializes ExecutionContext.
      */
-    public void initDriver(ExecutionContext context) {
+    private ExecutionContext initializeContext() {
 
-        log.info("Initializing WebDriver");
+        log.debug("Loading framework configuration.");
 
-        driverManager.initializeDriver(
-                context,
-                context.getConfig().getBrowserType(),
-                context.getConfig().isHeadless());
+        EnvConfig config = configLoader.load();
 
-        context.setState(ContextState.RUNNING);
+        log.debug("Creating execution workspace.");
 
-        log.info("Driver initialized");
+        ExecutionWorkspace workspace =
+                executionWorkspaceManager.createWorkspace();
+
+        log.debug("Creating ExecutionContext.");
+
+        ExecutionContext context =
+                new ExecutionContext(workspace);
+
+        context.setConfig(config);
+
+        context.setState(ContextState.INITIALIZED);
+
+        // Validate before publishing to ThreadLocal
+        contextValidator.validate(context);
+
+        ExecutionContextHolder.set(context);
+
+        log.debug("ExecutionContext initialized successfully.");
+
+        return context;
     }
 
     /**
-     * Cleanup after every test.
+     * Creates the WebDriver and stores it inside DriverContext.
      */
-    public void cleanupContext(ExecutionContext context) {
+    private void initializeDriver(
+            ExecutionContext context) {
 
-        log.info("Cleaning ExecutionContext");
+        if (context.getState() != ContextState.INITIALIZED) {
+
+            throw new FrameworkException(
+                    "ExecutionContext must be INITIALIZED before driver initialization.");
+        }
+
+        log.info("Initializing WebDriver.");
+
+        driverManager.initializeDriver(context);
+
+        context.setState(ContextState.RUNNING);
+
+        log.info("WebDriver initialized successfully.");
+    }
+
+    /**
+     * Opens the configured application URL.
+     */
+    private void launchApplication(
+            ExecutionContext context) {
+
+        if (context.getState() != ContextState.RUNNING) {
+
+            throw new FrameworkException(
+                    "ExecutionContext must be RUNNING before launching application.");
+        }
+
+        String url =
+                context.getConfig().getBaseUrl();
+
+        log.info("Launching application : {}", url);
+
+        driverManager
+                .getDriver(context)
+                .get(url);
+    }
+
+    /**
+     * Releases framework resources.
+     *
+     * This method always clears ThreadLocal storage even if browser shutdown
+     * fails.
+     */
+    public void destroyContext() {
+
+        ExecutionContext context = null;
 
         try {
 
+            context = ExecutionContextHolder.get();
+
             driverManager.quitDriver(context);
+
+            log.info("WebDriver shutdown completed.");
+
+        } catch (Exception ex) {
+
+            log.error("Framework cleanup failed.", ex);
 
         } finally {
 
-            context.setState(ContextState.DESTROYED);
+            if (context != null) {
 
-            ExecutionContextHolder.removeContext();
+                context.setState(ContextState.DESTROYED);
+            }
 
-            log.info("ExecutionContext destroyed");
+            ExecutionContextHolder.clear();
+
+            log.info("ExecutionContext destroyed.");
         }
     }
 }

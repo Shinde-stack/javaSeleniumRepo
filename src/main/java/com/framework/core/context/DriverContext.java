@@ -2,43 +2,37 @@ package com.framework.core.context;
 
 import org.openqa.selenium.WebDriver;
 
+import com.framework.core.excepions.FrameworkException;
+
 /**
- * Holds WebDriver instance for the current execution.
+ * DriverContext
  *
- * Responsibility:
- * - Store browser session
- * - Provide browser access
- * - Handle browser cleanup
+ * Holds the WebDriver instance for one test execution thread.
  *
- * IMPORTANT:
- * One DriverContext belongs to one test execution.
+ * Flow: DriverManager.initializeDriver() → setDriver() → pages/actions read via
+ * ExecutionContext → quitDriver() on cleanup
+ *
+ * One DriverContext per ExecutionContext; never shared across threads.
  */
 public class DriverContext {
 
-    private WebDriver driver;
+	private WebDriver driver;
 
-    /**
-     * Returns current WebDriver instance.
-     */
-    public WebDriver getDriver() {
-        return driver;
-    }
+	public WebDriver getDriver() {
 
-    /**
-     * Stores WebDriver instance.
-     */
-    public void setDriver(WebDriver driver) {
-        this.driver = driver;
-    }
+		if (driver == null) {
 
-    /**
-     * Safely closes browser session.
-     */
-    public void quitDriver() {
+			throw new FrameworkException("WebDriver has not been initialized.");
+		}
 
-        if (driver != null) {
-            driver.quit();
-            driver = null;
-        }
-    }
+		return driver;
+	}
+
+	public void setDriver(WebDriver driver) {
+		this.driver = driver;
+	}
+
+	public boolean hasDriver() {
+		return driver != null;
+	}
 }
