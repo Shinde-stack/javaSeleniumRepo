@@ -9,100 +9,187 @@ import com.framework.core.enums.EnvironmentType;
  * Class Name : TestMetadataContext
  * ============================================================================
  *
- * Holds metadata associated with a single test execution.
+ * Holds metadata for ONE test-method execution.
  *
- * Responsibilities ---------------- - Provide unique identifiers for tracing. -
- * Store execution metadata used by reporting, logging and screenshots. - Remain
- * independent of Selenium and TestNG.
+ * Consumed by:
+ * - Reporting
+ * - Logging
+ * - Screenshots
+ * - CI/CD diagnostics
  *
- * Lifecycle --------- ExecutionContext created │ ▼ Constructor generates: -
- * correlationId - executionId - startTime - threadId │ ▼
- * ContextLifecycleManager sets Environment │ ▼ TestListener sets Test Name │ ▼
- * Reporting / Logging / Screenshot consume metadata
+ * This class contains NO:
+ * - TestNG objects
+ * - Selenium objects
+ * - Reporting objects
+ *
  * ============================================================================
  */
 public class TestMetadataContext {
 
-	/**
-	 * Unique identifier used for correlating logs, screenshots and reports.
-	 * Generated once and never changes.
-	 */
-	private final String correlationId;
+    /**
+     * Unique identifier for correlating all artifacts
+     * belonging to this execution.
+     */
+    private final String correlationId;
 
-	/**
-	 * Unique execution identifier. Useful when integrating with CI/CD systems
-	 * later.
-	 */
-	private final String executionId;
+    /**
+     * Unique identifier for this execution instance.
+     */
+    private final String executionId;
 
-	/**
-	 * Timestamp when this ExecutionContext was created.
-	 */
-	private final long startTime;
+    /**
+     * Timestamp when this execution context was created.
+     */
+    private final long startTime;
 
-	/**
-	 * Thread executing this test. Automatically captured during construction.
-	 */
-	private final long threadId;
+    /**
+     * JVM thread ID executing this test.
+     */
+    private final long threadId;
 
-	/**
-	 * Active execution environment.
-	 */
-	private EnvironmentType environment;
+    /**
+     * JVM thread name executing this test.
+     *
+     * Useful for parallel execution diagnostics.
+     */
+    private final String threadName;
 
-	/**
-	 * Current test method name.
-	 */
-	private String testName;
+    /**
+     * Active execution environment.
+     */
+    private EnvironmentType environment;
 
-	public TestMetadataContext() {
+    /**
+     * TestNG <test> name from testng.xml.
+     *
+     * Example:
+     *
+     * <test name="Web Tests">
+     */
+    private String testngTestName;
 
-		this.correlationId = UUID.randomUUID().toString();
+    /**
+     * Java test class name.
+     *
+     * Example:
+     * LoginTest
+     */
+    private String className;
 
-		this.executionId = UUID.randomUUID().toString();
+    /**
+     * Test method name.
+     *
+     * Example:
+     * verifyValidLogin
+     */
+    private String methodName;
 
-		this.startTime = System.currentTimeMillis();
+    public TestMetadataContext() {
 
-		this.threadId = Thread.currentThread().threadId();
-	}
+        this.correlationId =
+                UUID.randomUUID().toString();
 
-	public String getCorrelationId() {
-		return correlationId;
-	}
+        this.executionId =
+                UUID.randomUUID().toString();
 
-	public String getExecutionId() {
-		return executionId;
-	}
+        this.startTime =
+                System.currentTimeMillis();
 
-	public long getStartTime() {
-		return startTime;
-	}
+        Thread currentThread =
+                Thread.currentThread();
 
-	public long getThreadId() {
-		return threadId;
-	}
+        this.threadId =
+                currentThread.threadId();
 
-	public EnvironmentType getEnvironment() {
-		return environment;
-	}
+        this.threadName =
+                currentThread.getName();
+    }
 
-	public void setEnvironment(EnvironmentType environment) {
-		this.environment = environment;
-	}
+    // ========================================================================
+    // GETTERS
+    // ========================================================================
 
-	public String getTestName() {
-		return testName;
-	}
+    public String getCorrelationId() {
+        return correlationId;
+    }
 
-	public void setTestName(String testName) {
-		this.testName = testName;
-	}
+    public String getExecutionId() {
+        return executionId;
+    }
 
-	@Override
-	public String toString() {
+    public long getStartTime() {
+        return startTime;
+    }
 
-		return "TestMetadataContext{" + "correlationId='" + correlationId + '\'' + ", executionId='" + executionId
-				+ '\'' + ", startTime=" + startTime + ", threadId=" + threadId + ", environment=" + environment
-				+ ", testName='" + testName + '\'' + '}';
-	}
+    public long getThreadId() {
+        return threadId;
+    }
+
+    public String getThreadName() {
+        return threadName;
+    }
+
+    public EnvironmentType getEnvironment() {
+        return environment;
+    }
+
+    public String getTestngTestName() {
+        return testngTestName;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    // ========================================================================
+    // SETTERS
+    // ========================================================================
+
+    public void setEnvironment(
+            EnvironmentType environment) {
+
+        this.environment = environment;
+    }
+
+    public void setTestngTestName(
+            String testngTestName) {
+
+        this.testngTestName = testngTestName;
+    }
+
+    public void setClassName(
+            String className) {
+
+        this.className = className;
+    }
+
+    public void setMethodName(
+            String methodName) {
+
+        this.methodName = methodName;
+    }
+
+    // ========================================================================
+    // DEBUG / LOGGING
+    // ========================================================================
+
+    @Override
+    public String toString() {
+
+        return "TestMetadataContext{" +
+                "correlationId='" + correlationId + '\'' +
+                ", executionId='" + executionId + '\'' +
+                ", startTime=" + startTime +
+                ", threadId=" + threadId +
+                ", threadName='" + threadName + '\'' +
+                ", environment=" + environment +
+                ", testngTestName='" + testngTestName + '\'' +
+                ", className='" + className + '\'' +
+                ", methodName='" + methodName + '\'' +
+                '}';
+    }
 }

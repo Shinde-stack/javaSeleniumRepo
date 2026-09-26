@@ -41,7 +41,7 @@ public class DriverFactory {
 
 			throw new DriverException(
 				    "Failed to create browser: "
-				    + browserType +"Exception is -"+e);		}
+				    + browserType , e);		}
 	}
 
 }

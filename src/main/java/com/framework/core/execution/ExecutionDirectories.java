@@ -65,15 +65,6 @@ public final class ExecutionDirectories {
         return reportDirectory;
     }
 
-    /**
-     * Returns the full path of the Extent report.
-     */
-    public Path getReportFile() {
-
-        return reportDirectory.resolve(
-                ReportConstants.REPORT_FILE_NAME);
-    }
-
     public Path getScreenshotDirectory() {
         return screenshotDirectory;
     }
@@ -92,6 +83,15 @@ public final class ExecutionDirectories {
 
     public Path getTempDirectory() {
         return tempDirectory;
+    }
+    
+    /**
+     * Returns the full path of the Extent report.
+     */
+    public Path getReportFile() {
+
+        return reportDirectory.resolve(
+                ReportConstants.REPORT_FILE_NAME);
     }
 
     @Override

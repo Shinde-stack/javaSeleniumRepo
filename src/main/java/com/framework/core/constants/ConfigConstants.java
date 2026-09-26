@@ -26,9 +26,7 @@ public final class ConfigConstants {
 
 	public static final String CONFIG_DIRECTORY = "config/";
 
-	public static final String CONFIG_EXTENSION = ".properties";
-
 	public static final String DEFAULT_FALLBACK_ENV = "QA";
 
-	public static final List<String> MANDATORY_PROPERTIES = List.of("browser", "headless", "baseUrl");
+	public static final List<String> MANDATORY_PROPERTIES = List.of("browser", "baseUrl");
 }

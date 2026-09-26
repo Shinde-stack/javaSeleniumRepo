@@ -1,138 +1,158 @@
 package com.framework.core.reporting;
 
+import java.nio.file.Path;
+
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
-import com.aventstack.extentreports.MediaEntityBuilder;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import com.framework.core.constants.ReportConstants;
+import com.framework.core.excepions.FrameworkException;
+import com.framework.core.execution.ExecutionWorkspace;
 
 /**
  * ============================================================================
  * Class Name : ReportManager
  * ============================================================================
  *
- * Thread-safe wrapper around ExtentReports.
+ * Manages ExtentReports lifecycle.
  *
- * Responsibilities ---------------- - Initialize ExtentReports once per
- * execution. - Maintain one ExtentTest per execution thread. - Provide
- * framework-wide reporting APIs. - Flush the report after execution.
+ * Responsibilities:
+ * - Initialize report.
+ * - Create tests.
+ * - Maintain current test using ThreadLocal.
+ * - Log test information.
+ * - Flush report.
  *
- * This class intentionally contains no: - Selenium logic - TestNG logic -
- * Screenshot capture logic - Execution directory logic
+ * Does NOT:
+ * - Create directories.
+ * - Manage screenshots.
+ * - Manage WebDriver.
  *
- * Flow ----
+ * Filesystem ownership belongs to ExecutionWorkspace.
  *
- * TestListener │ ▼ initReport(reportPath) │ ▼ createTest() │ ▼ setTest() │ ▼
- * pass()/fail()/info()/warn() │ ▼ flush()
+ * Dependency direction:
+ *
+ * ExecutionWorkspace
+ *        ↓
+ * ReportManager
+ *
+ * Never:
+ *
+ * ReportManager
+ *        ↓
+ * ExecutionWorkspaceManager
  *
  * ============================================================================
  */
 public final class ReportManager {
 
-	private static ExtentReports extentReports;
+    private static ExtentReports extentReports;
 
-	/**
-	 * One ExtentTest per execution thread.
-	 */
-	private static final ThreadLocal<ExtentTest> CURRENT_TEST = new ThreadLocal<>();
+    private static final ThreadLocal<ExtentTest> CURRENT_TEST =
+            new ThreadLocal<>();
 
-	private ReportManager() {
-		throw new UnsupportedOperationException("Utility class should not be instantiated.");
-	}
+    private ReportManager() {
+        throw new UnsupportedOperationException(
+                "Utility class");
+    }
 
-	/**
-	 * Initializes ExtentReports.
-	 *
-	 * Safe to invoke multiple times.
-	 */
-	public static synchronized void initReport(String reportPath) {
+    public static synchronized void init(
+            ExecutionWorkspace workspace) {
 
-		if (extentReports != null) {
-			return;
-		}
+        if (workspace == null) {
+            throw new FrameworkException(
+                    "ExecutionWorkspace cannot be null.");
+        }
 
-		ExtentSparkReporter sparkReporter = new ExtentSparkReporter(reportPath);
+        if (extentReports != null) {
+            return;
+        }
 
-		sparkReporter.config().setReportName(ReportConstants.REPORT_NAME);
+        Path reportFile =
+                workspace
+                        .getReportDirectory()
+                        .resolve("extent-report.html");
 
-		sparkReporter.config().setDocumentTitle(ReportConstants.REPORT_TITLE);
+        ExtentSparkReporter reporter =
+                new ExtentSparkReporter(
+                        reportFile.toString());
 
-		extentReports = new ExtentReports();
-		extentReports.attachReporter(sparkReporter);
-	}
+        extentReports =
+                new ExtentReports();
 
-	/**
-	 * Creates a new ExtentTest.
-	 */
-	public static synchronized ExtentTest createTest(String testName) {
+        extentReports.attachReporter(reporter);
+    }
 
-		if (extentReports == null) {
-			throw new IllegalStateException("ExtentReports has not been initialized.");
-		}
+    public static ExtentTest createTest(
+            String testName) {
 
-		return extentReports.createTest(testName);
-	}
+        ensureInitialized();
 
-	/**
-	 * Associates the supplied ExtentTest with the current thread.
-	 */
-	public static void setTest(ExtentTest test) {
+        return extentReports.createTest(testName);
+    }
 
-		if (test == null) {
-			throw new IllegalArgumentException("ExtentTest cannot be null.");
-		}
+    public static void setTest(
+            ExtentTest test) {
 
-		CURRENT_TEST.set(test);
-	}
+        CURRENT_TEST.set(test);
+    }
 
-	/**
-	 * Returns the current thread's ExtentTest.
-	 */
-	public static ExtentTest getTest() {
+    public static ExtentTest getTest() {
 
-		ExtentTest test = CURRENT_TEST.get();
+        ExtentTest test =
+                CURRENT_TEST.get();
 
-		if (test == null) {
-			throw new IllegalStateException("ExtentTest not initialized for current thread.");
-		}
+        if (test == null) {
+            throw new IllegalStateException(
+                    "ExtentTest not initialized for thread: "
+                    + Thread.currentThread().getName());
+        }
 
-		return test;
-	}
+        return test;
+    }
 
-	/**
-	 * Removes the ExtentTest associated with the current thread.
-	 */
-	public static void removeTest() {
-		CURRENT_TEST.remove();
-	}
+    public static void removeTest() {
 
-	public static void info(String message) {
-		getTest().info(message);
-	}
+        CURRENT_TEST.remove();
+    }
 
-	public static void pass(String message) {
-		getTest().pass(message);
-	}
+    public static void info(String message) {
 
-	public static void warn(String message) {
-		getTest().warning(message);
-	}
+        getTest().info(message);
+    }
 
-	public static void fail(String message) {
-		getTest().fail(message);
-	}
+    public static void pass(String message) {
 
-	public static void fail(Throwable throwable) {
-		getTest().fail(throwable);
-	}
+        getTest().pass(message);
+    }
 
-	/**
-	 * Writes the report to disk.
-	 */
-	public static synchronized void flush() {
+    public static void fail(Throwable throwable) {
 
-		if (extentReports != null) {
-			extentReports.flush();
-		}
-	}
+        getTest().fail(throwable);
+    }
+    
+    public static void fail(String message) {
+
+        getTest().fail(message);
+    }
+    
+    public static void warn(String message) {
+
+        getTest().warning(message);
+    }
+
+    public static void flush() {
+
+        if (extentReports != null) {
+            extentReports.flush();
+        }
+    }
+
+    private static void ensureInitialized() {
+
+        if (extentReports == null) {
+
+            throw new IllegalStateException(
+                    "ReportManager has not been initialized.");
+        }
+    }
 }

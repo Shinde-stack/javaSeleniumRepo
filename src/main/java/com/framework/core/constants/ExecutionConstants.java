@@ -1,5 +1,7 @@
 package com.framework.core.constants;
 
+import java.time.format.DateTimeFormatter;
+
 /**
  * ============================================================================
  * Class Name : ExecutionConstants
@@ -37,7 +39,9 @@ public final class ExecutionConstants {
                 "Utility class should not be instantiated.");
     }
 
-    /**
+
+
+	/**
      * Root build directory.
      */
     public static final String TARGET_DIRECTORY =
@@ -55,6 +59,19 @@ public final class ExecutionConstants {
     public static final String EXECUTIONS_DIRECTORY =
             "executions";
 
+    /**
+     * Timestamp format used to generate execution identifiers.
+     *
+     * Example:
+     * 20260816_194512
+     */
+    private static final DateTimeFormatter EXECUTION_ID_FORMATTER =
+            DateTimeFormatter.ofPattern("dd_mm_yyyy_HH_mm_ss");
+
+    public static DateTimeFormatter getExecutionIdFormatter() {
+		return EXECUTION_ID_FORMATTER;
+	}
+    
     /**
      * Artifact directories.
      */

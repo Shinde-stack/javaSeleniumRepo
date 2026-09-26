@@ -1,171 +1,104 @@
 package com.framework.core.reporting;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 
-import com.framework.core.context.ExecutionContext;
-import com.framework.core.context.ExecutionContextHolder;
+import com.aventstack.extentreports.MediaEntityBuilder;
 import com.framework.core.excepions.FrameworkException;
+import com.framework.core.execution.ExecutionWorkspace;
 
 /**
  * ============================================================================
  * Class Name : ScreenshotService
  * ============================================================================
  *
- * Central service responsible for capturing browser screenshots.
+ * Captures screenshots and stores them inside the current execution workspace.
  *
- * Responsibilities ---------------- - Capture screenshots from the active
- * WebDriver. - Generate readable screenshot names. - Store screenshots on disk.
- * - Attach screenshots to reports.
+ * Responsibility:
+ * - Capture screenshot.
+ * - Save screenshot.
+ * - Optionally attach it to current report.
  *
- * This class does NOT: - create WebDriver - manage browser lifecycle - depend
- * on TestNG
- *
- * Driver is obtained from the current ExecutionContext.
- *
- * ============================================================================
- *
- * Flow ----
- *
- * Test │ ▼ ScreenshotService.capture("Before Login") │ ▼ ExecutionContextHolder
- * │ ▼ DriverContext │ ▼ TakesScreenshot │ ▼ screenshots/ │ ▼
- * ReportManager.addScreenshot(path)
- *
- * ============================================================================
- *
- * Example -------
- *
- * capture();
- *
- * capture("Login Page");
- *
- * capture("Before Submit");
+ * It does NOT create execution directories.
  *
  * ============================================================================
  */
-public final class ScreenshotService {
+public class ScreenshotService {
 
-	private static final String SCREENSHOT_DIRECTORY = "SCREENSHOT_DIRECTORY";
+    public Path capture(
+            WebDriver driver,
+            ExecutionWorkspace workspace,
+            String name) {
 
-	private ScreenshotService() {
-		throw new UnsupportedOperationException("Utility class should not be instantiated.");
-	}
+        if (driver == null) {
+            throw new FrameworkException(
+                    "Cannot capture screenshot. WebDriver is null.");
+        }
 
-	/**
-	 * Captures a screenshot using a default title.
-	 *
-	 * @return absolute screenshot path
-	 */
-	public static String capture() {
+        if (workspace == null) {
+            throw new FrameworkException(
+                    "ExecutionWorkspace cannot be null.");
+        }
 
-		return capture("Screenshot");
-	}
+        try {
 
-	/**
-	 * Captures a screenshot using the supplied title.
-	 *
-	 * The screenshot is automatically attached to the report.
-	 *
-	 * @param title business friendly screenshot title
-	 *
-	 * @return absolute screenshot path
-	 */
-	public static String capture(String title) {
+            Path destination =
+                    workspace
+                            .getScreenshotDirectory()
+                            .resolve(
+                                    sanitize(name)
+                                    + ".png");
 
-		ExecutionContext context = ExecutionContextHolder.get();
+            Path source =
+                    ((TakesScreenshot) driver)
+                            .getScreenshotAs(
+                                    OutputType.FILE)
+                            .toPath();
 
-		WebDriver driver = context.getDriverContext().getDriver();
+            Files.copy(
+                    source,
+                    destination,
+                    StandardCopyOption.REPLACE_EXISTING);
 
-		if (driver == null) {
-			throw new FrameworkException("Cannot capture screenshot. Driver is null.");
-		}
+            return destination;
 
-		if (!(driver instanceof TakesScreenshot)) {
-			throw new FrameworkException("Current driver does not support screenshots.");
-		}
+        } catch (IOException e) {
 
-		try {
+            throw new FrameworkException(
+                    "Failed to save screenshot: " + name,
+                    e);
+        }
+    }
 
-			Path directory = Paths.get(SCREENSHOT_DIRECTORY);
+    public void captureAndAttach(
+            WebDriver driver,
+            ExecutionWorkspace workspace,
+            String name) {
 
-			Files.createDirectories(directory);
+        Path screenshot =
+                capture(
+                        driver,
+                        workspace,
+                        name);
 
-			String fileName = buildFileName(title, context.getMetadataContext().getTestName());
+        ReportManager.getTest()
+                .addScreenCaptureFromPath(
+                        screenshot.toString());
+        
+        MediaEntityBuilder.createScreenCaptureFromBase64String( ((TakesScreenshot) driver)
+                .getScreenshotAs(
+                        OutputType.BASE64)).build();
+    }
 
-			Path destination = directory.resolve(fileName);
+    private String sanitize(String name) {
 
-			File source = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-
-			Files.copy(source.toPath(), destination);
-
-//            ReportManager.addScreenshot(
-//                    destination.toString());
-
-			return destination.toString();
-
-		} catch (IOException ex) {
-
-			throw new FrameworkException("Unable to capture screenshot. " + ex);
-		}
-	}
-
-	/**
-	 * Creates a readable screenshot filename.
-	 */
-	private static String buildFileName(String title, String testName) {
-
-		String safeTitle = sanitize(title);
-
-		String safeTestName = sanitize(testName);
-
-		long timestamp = System.currentTimeMillis();
-
-		return safeTestName + "_" + safeTitle + "_" + timestamp + ".png";
-	}
-
-	/**
-	 * Removes characters that are illegal in filenames.
-	 */
-	private static String sanitize(String text) {
-
-		if (text == null || text.isBlank()) {
-			return "Unknown";
-		}
-
-		return text.trim().replaceAll("[^a-zA-Z0-9-_]", "_");
-	}
-	
-	public static String capture1(WebElement element, String elementName) {
-		
-		ExecutionContext context = ExecutionContextHolder.get();
-
-		WebDriver driver = context.getDriverContext().getDriver();
-
-		if (driver == null) {
-			throw new FrameworkException("Cannot capture screenshot. Driver is null.");
-		}
-
-		if (!(driver instanceof TakesScreenshot)) {
-			throw new FrameworkException("Current driver does not support screenshots.");
-		}
-	     JavascriptExecutor js = (JavascriptExecutor) driver;
-
-	        // Save original style to revert it later
-	        String originalStyle = element.getAttribute("style");
-
-	        // Apply a thick red border background highlight
-	        js.executeScript("arguments[0].setAttribute('style', 'border: 3px solid red; background: yellow;');", element);
-
-		return capture(elementName);
-	}
-
+        return name
+                .replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
 }

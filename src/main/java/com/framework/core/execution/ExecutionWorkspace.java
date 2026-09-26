@@ -1,75 +1,88 @@
 package com.framework.core.execution;
 
-import java.time.Instant;
+import java.nio.file.Path;
 
 /**
  * ============================================================================
  * Class Name : ExecutionWorkspace
  * ============================================================================
  *
- * Represents one complete automation execution.
+ * Represents the filesystem workspace for ONE framework execution.
  *
- * Responsibilities
- * ----------------
- * - Hold execution metadata.
- * - Hold execution directories.
+ * Example:
  *
- * This object is immutable and shared through the ExecutionContext.
+ * target/
+ *   framework-runs/
+ *      20260823-213500-abc123/
+ *          reports/
+ *          screenshots/
+ *          logs/
+ *          videos/
+ *
+ * Responsibilities:
+ * - Store root execution directory.
+ * - Provide standard artifact directories.
+ *
+ * This class does NOT create directories.
+ * Directory creation is handled by ExecutionDirectoryManager.
  *
  * ============================================================================
  */
-public final class ExecutionWorkspace {
+public class ExecutionWorkspace {
 
-    /**
-     * Unique identifier for the current execution.
-     *
-     * Example:
-     * 20260816_193245
-     */
-    private final String executionId;
+    private final Path rootDirectory;
 
-    /**
-     * Timestamp when execution started.
-     */
-    private final Instant startTime;
+    private final Path reportDirectory;
 
-    /**
-     * Local execution artifact directories.
-     */
-    private final ExecutionDirectories executionDirectories;
+    private final Path screenshotDirectory;
+
+    private final Path logDirectory;
+
+    private final Path videoDirectory;
 
     public ExecutionWorkspace(
-            String executionId,
-            Instant startTime,
-            ExecutionDirectories executionDirectories) {
+            Path rootDirectory,
+            Path reportDirectory,
+            Path screenshotDirectory,
+            Path logDirectory,
+            Path videoDirectory) {
 
-        this.executionId = executionId;
-        this.startTime = startTime;
-        this.executionDirectories = executionDirectories;
+        this.rootDirectory = rootDirectory;
+        this.reportDirectory = reportDirectory;
+        this.screenshotDirectory = screenshotDirectory;
+        this.logDirectory = logDirectory;
+        this.videoDirectory = videoDirectory;
     }
 
-    public String getExecutionId() {
-        return executionId;
+    public Path getRootDirectory() {
+        return rootDirectory;
     }
 
-    public Instant getStartTime() {
-        return startTime;
+    public Path getReportDirectory() {
+        return reportDirectory;
     }
 
-    /**
-     * Returns all directories belonging to this execution.
-     */
-    public ExecutionDirectories getExecutionDirectories() {
-        return executionDirectories;
+    public Path getScreenshotDirectory() {
+        return screenshotDirectory;
+    }
+
+    public Path getLogDirectory() {
+        return logDirectory;
+    }
+
+    public Path getVideoDirectory() {
+        return videoDirectory;
     }
 
     @Override
     public String toString() {
 
         return "ExecutionWorkspace{" +
-                "executionId='" + executionId + '\'' +
-                ", startTime=" + startTime +
-                ", executionDirectories=" + executionDirectories +
+                "rootDirectory=" + rootDirectory +
+                ", reportDirectory=" + reportDirectory +
+                ", screenshotDirectory=" + screenshotDirectory +
+                ", logDirectory=" + logDirectory +
+                ", videoDirectory=" + videoDirectory +
                 '}';
     }
 }

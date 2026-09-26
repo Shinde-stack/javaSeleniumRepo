@@ -14,162 +14,477 @@ import com.framework.core.enums.EnvironmentType;
 import com.framework.core.excepions.FrameworkException;
 
 /**
- * ConfigLoader
+ * ============================================================================
+ * Class Name : ConfigLoader
+ * ============================================================================
  *
- * Loads environment properties from classpath and produces a typed EnvConfig.
+ * PURPOSE
+ * -------
+ * Loads environment-specific configuration and converts it into a typed
+ * EnvConfig object.
  *
- * Flow: load() → resolve env → read config/{env}.properties → validate
- * mandatory keys → build EnvConfig
+ * FLOW
+ * ----
  *
- * Fails fast on missing file or missing keys before driver or reporting startup
- * continues.
+ * load()
+ *   |
+ *   +--> resolveEnvironment()
+ *   |
+ *   +--> loadProperties()
+ *   |
+ *   +--> validateProperties()
+ *   |
+ *   +--> buildConfig()
+ *
+ * RESPONSIBILITIES
+ * ---------------
+ * - Resolve active environment
+ * - Load environment properties
+ * - Validate mandatory properties
+ * - Convert String properties into typed values
+ * - Validate base URL
+ * - Build EnvConfig
+ *
+ * DOES NOT
+ * --------
+ * - Create WebDriver
+ * - Manage ExecutionContext
+ * - Manage TestNG
+ * - Manage reporting
+ *
+ * ============================================================================
  */
 public class ConfigLoader {
 
-	private static final List<String> REQUIRED_PROPERTIES = ConfigConstants.MANDATORY_PROPERTIES;
+    private static final List<String> REQUIRED_PROPERTIES =
+            ConfigConstants.MANDATORY_PROPERTIES;
 
-	public EnvConfig load() {
+    /**
+     * Loads the active environment configuration.
+     *
+     * @return typed EnvConfig
+     */
+    public EnvConfig load() {
 
-		Properties properties = loadProperties();
+        /*
+         * 1. Resolve active environment.
+         */
+        EnvironmentType environment =
+                resolveEnvironment();
 
-		validateProperties(properties);
+        /*
+         * 2. Load corresponding properties file.
+         */
+        Properties properties =
+                loadProperties(environment);
 
-		return buildConfig(properties);
-	}
+        /*
+         * 3. Validate mandatory properties.
+         */
+        validateProperties(properties);
 
-	private Properties loadProperties() {
+        /*
+         * 4. Convert properties into typed configuration.
+         */
+        return buildConfig(
+                properties,
+                environment);
+    }
 
-		EnvironmentType env = EnvResolver.resolve();
+    // =========================================================================
+    // ENVIRONMENT
+    // =========================================================================
 
-		String file = ConfigConstants.CONFIG_DIRECTORY + env.getConfigFileName();
+    /**
+     * Resolves active environment.
+     *
+     * Priority:
+     *
+     * 1. JVM system property:
+     *      -Denv=qa
+     *
+     * 2. OS / CI environment variable:
+     *      ENV=qa
+     *
+     * 3. Framework default:
+     *      ConfigConstants.DEFAULT_FALLBACK_ENV
+     *
+     * @return resolved EnvironmentType
+     */
+    private EnvironmentType resolveEnvironment() {
 
-		Properties props = new Properties();
+        /*
+         * Priority 1:
+         * JVM system property.
+         *
+         * Example:
+         * mvn test -Denv=qa
+         */
+        String env =
+                System.getProperty("env");
 
-		try (InputStream input = getClass().getClassLoader().getResourceAsStream(file)) {
+        /*
+         * Priority 2:
+         * OS / CI environment variable.
+         *
+         * Example:
+         * ENV=uat
+         */
+        if (isBlank(env)) {
 
-			if (input == null) {
-				throw new FrameworkException("Configuration file not found: " + file);
-			}
-			props.load(input);
-		} catch (IOException e) {
+            env = System.getenv("ENV");
+        }
 
-			throw new FrameworkException(
-					"Failed to read configuration file: " + file + " Exception msg. is :" + e.getMessage());
-		}
-		return props;
-	}
+        /*
+         * Priority 3:
+         * Framework default.
+         */
+        if (isBlank(env)) {
 
-	private void validateProperties(Properties properties) {
+            env =
+                    ConfigConstants.DEFAULT_FALLBACK_ENV;
+        }
 
-		List<String> missingProperties = new ArrayList<>();
+        /*
+         * Convert String -> typed enum.
+         *
+         * EnvironmentType.from() is responsible for validating
+         * whether the supplied environment is supported.
+         */
+        return EnvironmentType.from(env);
+    }
 
-		for (String key : REQUIRED_PROPERTIES) {
+    // =========================================================================
+    // PROPERTY FILE
+    // =========================================================================
 
-			String value = properties.getProperty(key);
+    /**
+     * Loads the properties file for the selected environment.
+     *
+     * Example:
+     *
+     * EnvironmentType.QA
+     *      ↓
+     * config/qa.properties
+     *
+     * @param environment active environment
+     * @return loaded properties
+     */
+    private Properties loadProperties(
+            EnvironmentType environment) {
 
-			if (isBlank(value)) {
-				missingProperties.add(key);
-			}
-		}
+        String file =
+                ConfigConstants.CONFIG_DIRECTORY
+                + environment.getConfigFileName();
 
-		if (!missingProperties.isEmpty()) {
-			String message = "Config validation failed. Missing properties: " + String.join(", ", missingProperties);
-			throw new FrameworkException(message);
-		}
-	}
+        Properties properties =
+                new Properties();
 
-	private EnvConfig buildConfig(Properties properties) {
+        try (InputStream input =
+                     getClass()
+                         .getClassLoader()
+                         .getResourceAsStream(file)) {
 
-		BrowserType browserType = BrowserType.from(properties.getProperty("browser"));
-		String baseUrl = getBaseUrl(properties, "baseUrl");
+            if (input == null) {
 
-		// boolean values
-		boolean headless = getBoolean(properties, "headless", false);
+                throw new FrameworkException(
+                        "Configuration file not found: "
+                        + file);
+            }
 
-		boolean logToConsole = getBoolean(properties, "log.console", true);
+            properties.load(input);
 
-		boolean logToReport = getBoolean(properties, "log.report", true);
+        } catch (IOException e) {
 
-		boolean logElementActions = getBoolean(properties, "log.element.actions", true);
+            throw new FrameworkException(
+                    "Failed to read configuration file: "
+                    + file,
+                    e);
+        }
 
-		boolean logWaitActions = getBoolean(properties, "log.wait.actions", true);
+        return properties;
+    }
 
-		boolean screenshotOnFailure = getBoolean(properties, "screenshot.on.failure", true);
+    // =========================================================================
+    // VALIDATION
+    // =========================================================================
 
-		EnvConfig config = new EnvConfig();
+    /**
+     * Validates mandatory configuration properties.
+     *
+     * All missing properties are collected first.
+     *
+     * Example:
+     *
+     * browser =
+     * baseUrl =
+     *
+     * Result:
+     *
+     * Config validation failed.
+     * Missing properties: browser, baseUrl
+     */
+    private void validateProperties(
+            Properties properties) {
 
-		config.setBrowserType(browserType);
-		config.setHeadless(headless);
-		config.setBaseUrl(baseUrl);
+        List<String> missingProperties =
+                new ArrayList<>();
 
-		config.setLogToConsole(logToConsole);
-		config.setLogToReport(logToReport);
-		config.setLogElementActions(logElementActions);
-		config.setLogWaitActions(logWaitActions);
-		config.setScreenshotOnFailure(screenshotOnFailure);
+        for (String key : REQUIRED_PROPERTIES) {
 
-		return config;
-	}
+            String value =
+                    properties.getProperty(key);
 
-	private boolean isBlank(String value) {
-		return value == null || value.trim().isEmpty();
-	}
+            if (isBlank(value)) {
 
-	private boolean getBoolean(Properties properties, String key, boolean defaultValue) {
+                missingProperties.add(key);
+            }
+        }
 
-		String value = properties.getProperty(key);
+        if (!missingProperties.isEmpty()) {
 
-		if (value == null) {
-			return defaultValue;
-		}
+            throw new FrameworkException(
+                    "Config validation failed. "
+                    + "Missing properties: "
+                    + String.join(
+                            ", ",
+                            missingProperties));
+        }
+    }
 
-		value = value.trim();
+    // =========================================================================
+    // BUILD CONFIGURATION
+    // =========================================================================
 
-		if ("true".equalsIgnoreCase(value)) {
-			return true;
-		}
+    /**
+     * Converts raw properties into typed EnvConfig.
+     */
+    private EnvConfig buildConfig(
+            Properties properties,
+            EnvironmentType environment) {
 
-		if ("false".equalsIgnoreCase(value)) {
-			return false;
-		}
+        /*
+         * Browser.
+         */
+        BrowserType browserType =
+                BrowserType.from(
+                        properties.getProperty("browser"));
 
-		throw new FrameworkException(
-				"Invalid boolean value for property '" + key + "': '" + value + "'. Expected 'true' or 'false'.");
-	}
+        /*
+         * URL.
+         */
+        String baseUrl =
+                getBaseUrl(
+                        properties,
+                        "baseUrl");
 
-	private String getBaseUrl(Properties properties, String key) {
+        /*
+         * Boolean configuration.
+         */
+        boolean headless =
+                getBoolean(
+                        properties,
+                        "headless",
+                        false);
 
-		String value = properties.getProperty(key);
+        boolean logToConsole =
+                getBoolean(
+                        properties,
+                        "log.console",
+                        true);
 
-		if (isBlank(value)) {
-			throw new FrameworkException("Configuration property '" + key + "' cannot be null or blank.");
-		}
+        boolean logToReport =
+                getBoolean(
+                        properties,
+                        "log.report",
+                        true);
 
-		value = value.trim();
+        boolean logElementActions =
+                getBoolean(
+                        properties,
+                        "log.element.actions",
+                        true);
 
-		try {
+        boolean logWaitActions =
+                getBoolean(
+                        properties,
+                        "log.wait.actions",
+                        true);
 
-			URI uri = new URI(value);
+        boolean screenshotOnFailure =
+                getBoolean(
+                        properties,
+                        "screenshot.on.failure",
+                        true);
 
-			String scheme = uri.getScheme();
+        /*
+         * Build typed configuration object.
+         */
+        EnvConfig config =
+                new EnvConfig();
 
-			if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+        config.setEnvironmentType(
+                environment);
 
-				throw new FrameworkException(
-						"Invalid URL scheme for property '" + key + "'. Only HTTP and HTTPS are supported.");
-			}
+        config.setBrowserType(
+                browserType);
 
-			if (uri.getHost() == null || uri.getHost().isBlank()) {
+        config.setHeadless(
+                headless);
 
-				throw new FrameworkException("Invalid URL for property '" + key + "'. Host name is missing.");
-			}
+        config.setBaseUrl(
+                baseUrl);
 
-			return value;
+        config.setLogToConsole(
+                logToConsole);
 
-		} catch (URISyntaxException e) {
+        config.setLogToReport(
+                logToReport);
 
-			throw new FrameworkException("Invalid URL syntax for property '" + key + "': " + value
-					+ " Exception msg. is :" + e.getMessage());
-		}
-	}
+        config.setLogElementActions(
+                logElementActions);
+
+        config.setLogWaitActions(
+                logWaitActions);
+
+        config.setScreenshotOnFailure(
+                screenshotOnFailure);
+
+        return config;
+    }
+
+    // =========================================================================
+    // BOOLEAN
+    // =========================================================================
+
+    /**
+     * Reads a boolean property.
+     *
+     * Missing property:
+     *      -> supplied default value
+     *
+     * true / false:
+     *      -> accepted case-insensitively
+     *
+     * Anything else:
+     *      -> FrameworkException
+     */
+    private boolean getBoolean(
+            Properties properties,
+            String key,
+            boolean defaultValue) {
+
+        String value =
+                properties.getProperty(key);
+
+        if (isBlank(value)) {
+
+            return defaultValue;
+        }
+
+        value =
+                value.trim();
+
+        if ("true".equalsIgnoreCase(value)) {
+
+            return true;
+        }
+
+        if ("false".equalsIgnoreCase(value)) {
+
+            return false;
+        }
+
+        throw new FrameworkException(
+                "Invalid boolean value for property '"
+                + key
+                + "': '"
+                + value
+                + "'. Expected 'true' or 'false'.");
+    }
+
+    // =========================================================================
+    // URL
+    // =========================================================================
+
+    /**
+     * Validates configured application URL.
+     *
+     * This validates URL syntax/configuration.
+     *
+     * It does NOT check whether the application is reachable.
+     */
+    private String getBaseUrl(
+            Properties properties,
+            String key) {
+
+        String value =
+                properties.getProperty(key);
+
+        if (isBlank(value)) {
+
+            throw new FrameworkException(
+                    "Configuration property '"
+                    + key
+                    + "' cannot be null or blank.");
+        }
+
+        value =
+                value.trim();
+
+        try {
+
+            URI uri =
+                    new URI(value);
+
+            String scheme =
+                    uri.getScheme();
+
+            /*
+             * Only HTTP/HTTPS are allowed.
+             */
+            if (scheme == null
+                    || !(scheme.equalsIgnoreCase("http")
+                    || scheme.equalsIgnoreCase("https"))) {
+
+                throw new FrameworkException(
+                        "Invalid URL scheme for property '"
+                        + key
+                        + "'. Only HTTP and HTTPS are supported.");
+            }
+
+            /*
+             * Host must exist.
+             */
+            if (uri.getHost() == null
+                    || uri.getHost().isBlank()) {
+
+                throw new FrameworkException(
+                        "Invalid URL for property '"
+                        + key
+                        + "'. Host name is missing.");
+            }
+
+            return value;
+
+        } catch (URISyntaxException e) {
+
+            throw new FrameworkException(
+                    "Invalid URL syntax for property '"
+                    + key
+                    + "': "
+                    + value,
+                    e);
+        }
+    }
+
+    // =========================================================================
+    // UTILITY
+    // =========================================================================
+
+    private boolean isBlank(String text) {
+
+        return text == null
+                || text.isBlank();
+    }
 }
