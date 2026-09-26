@@ -21,13 +21,12 @@ import com.framework.core.excepions.DriverException;
  */
 public class DriverManager {
 
-
 	private final DriverFactory driverFactory;
 
 	public DriverManager(DriverFactory driverFactory) {
-	    this.driverFactory = driverFactory;
+		this.driverFactory = driverFactory;
 	}
-	
+
 	/**
 	 * Creates a WebDriver and stores it in the supplied ExecutionContext.
 	 */

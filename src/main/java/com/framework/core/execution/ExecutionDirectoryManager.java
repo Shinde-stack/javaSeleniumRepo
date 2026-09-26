@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
-import com.framework.core.constants.ExecutionConstants;
 import com.framework.core.excepions.FrameworkException;
 
 /**
@@ -13,138 +15,116 @@ import com.framework.core.excepions.FrameworkException;
  * Class Name : ExecutionDirectoryManager
  * ============================================================================
  *
- * Creates the local directory structure for one automation execution.
+ * Creates physical directories for one framework execution.
  *
- * Responsibilities
- * ----------------
- * - Create the execution root directory.
- * - Create all artifact sub-directories.
- * - Return an immutable ExecutionDirectories object.
+ * Directory structure:
  *
- * This class does NOT:
- * - Generate execution IDs.
- * - Generate reports.
- * - Capture screenshots.
- * - Upload artifacts.
- * - Clean old executions.
- *
- * Flow
- * ----
- *
- * ExecutionWorkspaceManager
- *          │
- *          ▼
- * initialize(executionId)
- *          │
- *          ▼
  * target/
- *   automation/
- *      executions/
- *          <executionId>/
- *              report/
- *              screenshots/
- *              logs/
- *              downloads/
- *              videos/
- *              temp/
+ *   framework-runs/
+ *      yyyyMMdd-HHmmss-xxxxxxxx/
+ *          reports/
+ *          screenshots/
+ *          logs/
+ *          videos/
  *
  * ============================================================================
  */
 public class ExecutionDirectoryManager {
 
-    /**
-     * Creates the complete execution workspace.
-     *
-     * @param executionId Unique execution identifier.
-     *
-     * @return Immutable ExecutionDirectories.
-     */
-    public ExecutionDirectories initialize(String executionId) {
+    private static final DateTimeFormatter RUN_FORMAT =
+            DateTimeFormatter.ofPattern(
+                    "yyyyMMdd-HHmmss");
+
+
+    public ExecutionWorkspace createWorkspace() {
 
         try {
 
-            Path executionDirectory =
-                    createExecutionDirectory(executionId);
+            // =================================================================
+            // Root execution directory
+            // =================================================================
+
+            Path rootDirectory =
+                    Paths.get(
+                            "target",
+                            "framework-runs",
+                            createRunDirectoryName());
+
+
+            // =================================================================
+            // Artifact directories
+            // =================================================================
 
             Path reportDirectory =
-                    createSubDirectory(
-                            executionDirectory,
-                            ExecutionConstants.REPORT_DIRECTORY_NAME);
+                    rootDirectory.resolve(
+                            "reports");
 
             Path screenshotDirectory =
-                    createSubDirectory(
-                            executionDirectory,
-                            ExecutionConstants.SCREENSHOT_DIRECTORY_NAME);
+                    rootDirectory.resolve(
+                            "screenshots");
 
             Path logDirectory =
-                    createSubDirectory(
-                            executionDirectory,
-                            ExecutionConstants.LOG_DIRECTORY_NAME);
-
-            Path downloadDirectory =
-                    createSubDirectory(
-                            executionDirectory,
-                            ExecutionConstants.DOWNLOAD_DIRECTORY_NAME);
+                    rootDirectory.resolve(
+                            "logs");
 
             Path videoDirectory =
-                    createSubDirectory(
-                            executionDirectory,
-                            ExecutionConstants.VIDEO_DIRECTORY_NAME);
+                    rootDirectory.resolve(
+                            "videos");
 
-            Path tempDirectory =
-                    createSubDirectory(
-                            executionDirectory,
-                            ExecutionConstants.TEMP_DIRECTORY_NAME);
 
-            return new ExecutionDirectories(
-                    executionDirectory,
+            // =================================================================
+            // Create directories
+            // =================================================================
+
+            Files.createDirectories(
+                    reportDirectory);
+
+            Files.createDirectories(
+                    screenshotDirectory);
+
+            Files.createDirectories(
+                    logDirectory);
+
+            Files.createDirectories(
+                    videoDirectory);
+
+
+            // =================================================================
+            // Return workspace
+            // =================================================================
+
+            return new ExecutionWorkspace(
+                    rootDirectory,
                     reportDirectory,
                     screenshotDirectory,
                     logDirectory,
-                    downloadDirectory,
-                    videoDirectory,
-                    tempDirectory);
+                    videoDirectory);
 
-        } catch (IOException ex) {
+
+        } catch (IOException e) {
 
             throw new FrameworkException(
-                    "Failed to create execution directory structure for execution: "
-                            + executionId,
-                    ex);
+                    "Failed to create execution workspace.",
+                    e);
         }
     }
 
-    /**
-     * Creates the root directory for one execution.
-     */
-    private Path createExecutionDirectory(String executionId)
-            throws IOException {
 
-        Path executionDirectory =
-                Paths.get(
-                        ExecutionConstants.TARGET_DIRECTORY,
-                        ExecutionConstants.AUTOMATION_DIRECTORY,
-                        ExecutionConstants.EXECUTIONS_DIRECTORY,
-                        executionId);
+    private String createRunDirectoryName() {
 
-        Files.createDirectories(executionDirectory);
+        String timestamp =
+                LocalDateTime.now()
+                        .format(RUN_FORMAT);
 
-        return executionDirectory;
-    }
 
-    /**
-     * Creates one child directory under the execution workspace.
-     */
-    private Path createSubDirectory(
-            Path parentDirectory,
-            String childDirectory)
-            throws IOException {
+        String uniqueId =
+                UUID.randomUUID()
+                        .toString()
+                        .substring(0, 8);
 
-        Path directory =
-                parentDirectory.resolve(childDirectory);
 
-        Files.createDirectories(directory);
-
-        return directory;
+        return timestamp
+                + "-"
+                + uniqueId;
     }
 }

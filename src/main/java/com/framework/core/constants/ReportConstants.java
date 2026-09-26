@@ -23,15 +23,18 @@ public final class ReportConstants {
 	/**
 	 * Default Extent report filename.
 	 */
-	public static final String REPORT_FILE_NAME = "REPORT_FILE_NAME.html";
+	public static final String REPORT_FILE_NAME = "ReportConstantsREPORT_FILE_NAME.html";
 
 	/**
 	 * Report display name.
 	 */
-	public static final String REPORT_NAME = "REPORT_NAME";
+	public static final String REPORT_NAME = "ReportConstantsREPORT_NAME";
 
 	/**
 	 * Browser title.
 	 */
-	public static final String REPORT_TITLE = "REPORT_TITLE";
+	public static final String REPORT_TITLE = "ReportConstantsREPORT_TITLE";
+
+	//my
+	public static final String REPORT_DIR = "ReportConstantsREPORT_DIR";
 }

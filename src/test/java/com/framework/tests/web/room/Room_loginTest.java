@@ -1,11 +1,15 @@
 package com.framework.tests.web.room;
 
+import org.openqa.selenium.WebDriver;
 import org.testng.Assert;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import com.framework.core.assertion.AssertionEngine;
 import com.framework.core.assertion.Severity;
+import com.framework.core.context.ExecutionContext;
+import com.framework.core.context.ExecutionContextHolder;
+import com.framework.core.execution.ExecutionWorkspace;
 import com.framework.core.listeners.TestListener;
 import com.framework.core.logging.TestLogger;
 import com.framework.core.reporting.ScreenshotService;
@@ -16,12 +20,30 @@ import com.framework.web.pages.room.Room_loginPage;
 @Listeners(TestListener.class)
 public class Room_loginTest {
 
+	//temporary
+    private final ScreenshotService screenshotService =
+            new ScreenshotService();
+    
 	@Test
 	public void verifyMsg_otpSendToInvalidMobNo() throws InterruptedException {
 		TestLogger.logStep("Login to site");
 
 		// Step 1: page object resolves driver from ExecutionContext via BasePage
 		Room_loginPage room_loginPage = new Room_loginPage();
+		
+
+	    ExecutionContext context =
+	            ExecutionContextHolder.get();
+
+	    WebDriver driver =
+	            context.getDriverContext().getDriver();
+
+	    ExecutionWorkspace workspace =
+	            context.getExecutionWorkspace();
+
+	//    driver.get("https://example.com");
+
+	 
 
 //			// Step 2: navigate to login URL and wait for page load
 		room_loginPage.openBaseUrl();
@@ -39,19 +61,24 @@ public class Room_loginTest {
 		
 		Thread.sleep(5000);
 		
+		   screenshotService.captureAndAttach(
+		            driver,
+		            workspace,
+		            "sc page");
+		
 		boolean isMsgDisp = room_loginPage.isMsgDisplayed();
 		String msgText = room_loginPage.getMsgDisplayed();
 		TestLogger.logPass("msgText ->"+msgText);
 		TestLogger.logPass("isMsgDisp ->"+isMsgDisp);
 
-		ScreenshotService.capture("Msg. displayed or not after otp send to invalid mob. no.");
+	//	ScreenshotService.capture("Msg. displayed or not after otp send to invalid mob. no.");
 
 		
 		// Step 5: exercise AssertionEngine hard/soft modes (demo only)
 		AssertionEngine assertionEngine = new AssertionEngine();
 		assertionEngine.assertTrue(!isMsgDisp, "Msg. displayed after otp send to invalid mob. no. as expected", "Msg. NOT displayed after otp send to invalid mob. no.", Severity.SOFT);
 		
-
+		assertionEngine.assertAll();
 	}
 
 }

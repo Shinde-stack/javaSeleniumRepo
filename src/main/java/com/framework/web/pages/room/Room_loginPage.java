@@ -114,7 +114,7 @@ public class Room_loginPage extends BasePage {
 	public String getMsgDisplayed() {
 		TestLogger.logStep("Get msg.");
 		
-		ScreenshotService.capture1(driver.findElement(errorMsg), "Msg. in box");
+	//	ScreenshotService.capture1(driver.findElement(errorMsg), "Msg. in box");
 
 		return actions.getText(errorMsg, "get msg displayed");
 

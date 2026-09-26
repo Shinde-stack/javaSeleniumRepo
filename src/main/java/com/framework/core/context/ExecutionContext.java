@@ -8,19 +8,25 @@ import com.framework.core.execution.ExecutionWorkspace;
  * Class Name : ExecutionContext
  * ============================================================================
  *
- * Represents all runtime state for a single test execution.
+ * Runtime state for ONE test-method execution.
  *
- * Responsibilities
- * ----------------
- * - Hold DriverContext.
- * - Hold TestMetadataContext.
- * - Hold framework configuration.
- * - Hold ExecutionWorkspace.
- * - Maintain execution lifecycle state.
+ * One ExecutionContext is bound to one executing thread through
+ * ExecutionContextHolder.
  *
- * This class is a pure state container.
+ * Responsibilities:
  *
- * One ExecutionContext exists per executing test thread.
+ * - DriverContext
+ * - TestMetadataContext
+ * - EnvConfig
+ * - ExecutionWorkspace
+ * - Lifecycle state
+ *
+ * This is a pure framework state container.
+ *
+ * It must NOT depend on:
+ * - TestNG
+ * - ExtentReports
+ * - Selenium-specific lifecycle logic
  *
  * ============================================================================
  */
@@ -32,24 +38,24 @@ public class ExecutionContext {
     private ContextState state;
 
     /**
-     * Driver state for this execution.
+     * Driver state belonging to this execution.
      */
     private final DriverContext driverContext;
 
     /**
-     * Test metadata.
+     * Metadata belonging to this execution.
      */
     private final TestMetadataContext metadataContext;
 
     /**
-     * Framework configuration.
+     * Environment/framework configuration.
      */
     private EnvConfig config;
 
     /**
      * Shared execution workspace.
      *
-     * Every test executed within the same suite references the same workspace.
+     * This may be shared across tests depending on the execution model.
      */
     private final ExecutionWorkspace executionWorkspace;
 
@@ -67,12 +73,16 @@ public class ExecutionContext {
         this.executionWorkspace = executionWorkspace;
     }
 
-    public ContextState getState() {
-        return state;
-    }
-
     public void setState(ContextState state) {
         this.state = state;
+    }
+
+    public void setConfig(EnvConfig config) {
+        this.config = config;
+    }
+
+    public ContextState getState() {
+        return state;
     }
 
     public DriverContext getDriverContext() {
@@ -87,26 +97,11 @@ public class ExecutionContext {
         return config;
     }
 
-    public void setConfig(EnvConfig config) {
-        this.config = config;
-    }
-
     public ExecutionWorkspace getExecutionWorkspace() {
         return executionWorkspace;
     }
 
     public boolean hasDriver() {
         return driverContext.getDriver() != null;
-    }
-
-    @Override
-    public String toString() {
-
-        return "ExecutionContext{" +
-                "state=" + state +
-                ", executionId=" + executionWorkspace.getExecutionId() +
-                ", testName=" + metadataContext.getTestName() +
-                ", correlationId=" + metadataContext.getCorrelationId() +
-                '}';
     }
 }
