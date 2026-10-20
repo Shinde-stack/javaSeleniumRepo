@@ -14,6 +14,8 @@ import com.framework.web.pages.LoginPage;
 public class Room_loginPage extends BasePage {
 
 	private By actionsWeList_by = By.xpath("//nav[contains(@class,'landing')]//a");
+	private By loginPageBtnsList_by = By.xpath("//button");
+
 	private By login_by = By.xpath("//a[contains(text(),'Log in')]");
 
 	private By xBtn = By.xpath("//section//button[contains(@class,'close')]");
@@ -38,14 +40,14 @@ public class Room_loginPage extends BasePage {
 		actions.click(login_by, "Login Tab");
 	}
 
-	public void clickActionOpetion(String text) {
+	public boolean clickActionOpetion(String text) {
 		TestLogger.logStep("Start to click -" + text);
 		waits.waitForPageLoad();
 
-		List<WebElement> actionsWeList = driver.findElements(actionsWeList_by);
+		List<WebElement> actionsWeList = driver.findElements(loginPageBtnsList_by);
 
 		boolean isFound = false;
-		List foundTexts = new ArrayList();
+		List <String> foundTexts = new ArrayList();
 
 		for (int a = 0; a < actionsWeList.size(); a++) {
 
@@ -54,16 +56,12 @@ public class Room_loginPage extends BasePage {
 			if (!weText.isBlank()) {
 
 				if (weText.trim().toLowerCase().contains(text.trim().toLowerCase())) {
-
 					isFound = true;
-
 					actions.click(actionsWeList.get(a), text);
-
 					TestLogger.logStep("Clicked -" + text);
-					return;
+					return isFound;
 				} else {
 					foundTexts.add(weText);
-					System.out.println(weText);
 				}
 
 			}
@@ -74,6 +72,8 @@ public class Room_loginPage extends BasePage {
 			TestLogger.logFailure("Not found -" + text + " But found texts are ->" + foundTexts, null);
 
 		}
+		
+		return isFound;
 
 	}
 
